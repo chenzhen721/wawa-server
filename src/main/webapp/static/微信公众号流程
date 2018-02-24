@@ -1,0 +1,44 @@
+【测试服】 test.api.memeyule.com
+【正式服】 api.memeyule.com
+1 微信公众号后台配置
+  1) 登陆 https://mp.weixin.qq.com/cgi-bin/loginpage?url=%2Fcgi-bin%2Fhome%3Ft%3Dhome%2Findex%26lang%3Dzh_CN%26token%3D1296640683
+  2) 输入账号密码 -> 微信客户端扫码 -> 点击基本配置
+  3) 修改服务器配置,填写回调地址【测试服】/weixin/call_back?app_id=xxxx&default_union=yyy,token令牌,随机生成消息加密秘钥,详情查看微信API:https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1421135319&token=&lang=zh_CN
+  4) 其中app_id 和 default_union 是需要替换,app_id是微信公众号id,default_union是默认渠道号
+
+2.登陆admin后台 —> 联运管理 -> 渠道管理
+  1) 选择一个类别是H5的渠道
+  2) 点击 "改" 按钮
+  3) 填写appId,appSecret,appName。(参考1中填写的appId和appSecret)
+  4) 填写后点击确认,点击"参数设置",点击生成。
+  5) 二维码生成
+
+3 网页授权配置
+  1) 登陆微信公众号 -> 接口权限 -> 网页授权获取用户基本信息
+  2) 下载MP_verify_xxxx.txt文件,复制到/webapp/static 目录下
+  3) 发布程序成功后,填写【测试服】或者 【正式服】,点击确定。
+
+4 生成菜单按钮
+  1) 调用WeixinController的create_menu,delete_menu,search_menu方法创建微信公众号自定义菜单
+  2) url =https://open.weixin.qq.com/connect/oauth2/authorize?appid=wxa25358916dea6f30&redirect_uri=http://api.memeyule.com/weixin/redirect?appid=wxa25358916dea6f30&response_type=code&scope=snsapi_userinfo&state=&connect_redirect=1#wechat_redirect
+  3) url需要encode,并且不同的微信公众号需要修改url中的appid和redirect_uri地址
+
+5 微信开放平台后台绑定公众号(保证unionID)
+  1) 登陆微信开放平台
+  2) 点击管理中心->公共账号->绑定公众账号
+  3) 填写微信公众号的账号密码
+  4) 搞不定找付良华
+
+备注:
+文件对应的公众号:
+测试公众号: 么么后宫秀
+MP_verify_7tMy3tgEHcpMDLLT.txt 么么后宫秀
+
+正式服公众号:
+MP_verify_8ZKpHWW8JSiqDbPA.txt  么么八卦
+MP_verify_4iGfgH4nODosttQa.txt  么么夜聊8
+MP_verify_MbHUgK1wI8uCMBN4.txt  么么娱乐扒
+
+
+
+

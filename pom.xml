@@ -1,0 +1,760 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--<parent>
+        <groupId>com.ttpod</groupId>
+        <artifactId>app</artifactId>
+        <version>1.3</version>
+    </parent>-->
+    <groupId>com</groupId>
+    <artifactId>wawa-server</artifactId>
+    <version>1.0</version>
+
+    <packaging>war</packaging>
+
+    <properties>
+        <targetJdk>1.8</targetJdk>
+
+        <maven-source-plugin-version>2.2.1</maven-source-plugin-version>
+        <maven-jar-plugin-version>2.4</maven-jar-plugin-version>
+        <maven-compiler-plugin-version>3.1</maven-compiler-plugin-version>
+
+        <groovy-all-compiler-version>2.4.13</groovy-all-compiler-version>
+        <groovy-scope>provided</groovy-scope>
+
+        <spring-version>3.2.3.RELEASE</spring-version>
+        <aspectj-version>1.7.2</aspectj-version>
+
+        <httpclient-version>4.2.3</httpclient-version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <javassist.version>3.17.1-GA</javassist.version>
+        <jackson-version>1.9.12</jackson-version>
+
+        <logback-version>1.1.3</logback-version>
+
+        <log.target>stdout</log.target>
+
+        <log.web.level>DEBUG</log.web.level>
+        <pic.domain>https://img.lezhuale.com/</pic.domain>
+        <api.domain>http://api.lezhuale.com/</api.domain>
+        <user.domain>http://user.lezhuale.com/</user.domain>
+        <site.domain>http://www.lezhuale.com/</site.domain>
+        <h5.domain>http://www.lezhuale.com/</h5.domain>
+        <m.domain>http://www.lezhuale.com/</m.domain>
+        <gif.domain>http://record.lezhuale.com/</gif.domain>
+        <im.domain>http://aiim.17laihou.com:6070</im.domain>
+        <ws.domain>http://ws.lezhuale.com:7010</ws.domain>
+        <!--<wsvideo.domain>http://v.17laihou.com</wsvideo.domain>-->
+
+        <redis.timeout>15000</redis.timeout>
+        <redis.mem.db>0</redis.mem.db>
+        <redis.host>192.168.2.15</redis.host>
+        <redis.port>6379</redis.port>
+        <redis.mem.host>${redis.host}</redis.mem.host>
+        <redis.mem.port>6379</redis.mem.port>
+
+        <redis.chat.host>${redis.host}</redis.chat.host>
+        <redis.chat.port>6379</redis.chat.port>
+
+        <redis.im.host>${redis.host}</redis.im.host>
+        <redis.im.port>6379</redis.im.port>
+
+        <redis.user.host>${redis.host}</redis.user.host>
+        <redis.user.port>6379</redis.user.port>
+
+        <!--<mongo.uri>192.168.2.27:10000</mongo.uri>-->
+        <pic.folder>/empty/upload/</pic.folder>
+
+        <msg.thread.minSize>100</msg.thread.minSize>
+        <msg.thread.maxSize>200</msg.thread.maxSize>
+
+        <buss.thread.minSize>300</buss.thread.minSize>
+        <buss.thread.maxSize>400</buss.thread.maxSize>
+
+        <redis.pool.maxActive>500</redis.pool.maxActive>
+        <redis.pool.maxIdle>500</redis.pool.maxIdle>
+        <redis.pool.maxWait>-1</redis.pool.maxWait>
+        <redis.pool.testOnBorrow>true</redis.pool.testOnBorrow>
+        <redis.pool.testOnReturn>true</redis.pool.testOnReturn>
+
+        <chat.pool.maxActive>300</chat.pool.maxActive>
+        <chat.pool.maxIdle>300</chat.pool.maxIdle>
+        <chat.pool.maxWait>1500</chat.pool.maxWait>
+
+        <im.pool.maxActive>300</im.pool.maxActive>
+        <im.pool.maxIdle>300</im.pool.maxIdle>
+        <im.pool.maxWait>1500</im.pool.maxWait>
+
+        <aspectj-scope>compile</aspectj-scope>
+        <!--<mongo.cost.write>ACKNOWLEDGED</mongo.cost.write>-->
+
+
+
+        <jetty9-version>9.4.8.v20171121</jetty9-version>
+        <jar-include>**</jar-include>
+        <jar-exclude>test/**</jar-exclude>
+        <addMavenDescriptor>true</addMavenDescriptor>
+        <contextPath/>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <sourceEncoding>UTF-8</sourceEncoding>
+
+        <cglib-version>2.2.2</cglib-version>
+
+        <c3p0-version>0.9.1.2</c3p0-version>
+        <ibatis-version>2.3.4.726</ibatis-version>
+
+        <junit-version>4.11</junit-version>
+        <lombok-version>0.11.8</lombok-version>
+        <slf4j-version>1.7.5</slf4j-version>
+
+        <apache-poi-version>3.5-FINAL</apache-poi-version>
+        <commons-net-version>3.1</commons-net-version>
+        <commons-beanutils-version>1.8.3</commons-beanutils-version>
+        <commons-collections-version>3.2.1</commons-collections-version>
+        <commons-lang-version>2.6</commons-lang-version>
+        <commons-pool-version>1.6</commons-pool-version>
+        <commons-fileupload-version>1.2.2</commons-fileupload-version>
+        <commons-io-version>2.4</commons-io-version>
+        <commons-validator-version>1.4.0</commons-validator-version>
+        <commons-digester-version>2.1</commons-digester-version>
+        <commons-dbutils-version>1.5</commons-dbutils-version>
+        <log4j-version>1.2.17</log4j-version>
+
+        <servlet-api-version>2.5</servlet-api-version>
+        <jsp-api-version>2.2</jsp-api-version>
+        <jstl-version>1.2</jstl-version>
+
+        <struts1-version>1.2.9</struts1-version>
+        <sitemesh-version>2.4.2</sitemesh-version>
+        <oscache-version>2.4</oscache-version>
+        <cos-version>05Nov2002</cos-version>
+
+        <mysql-connector-java-version>5.1.21</mysql-connector-java-version>
+        <mongo-java-driver-version>2.11.1</mongo-java-driver-version>
+
+    </properties>
+
+    <build>
+        <finalName>${project.artifactId}</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>*.properties</include>
+                    <include>logback.xml</include>
+                </includes>
+                <filtering>true</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                    <include>apple/*</include>
+                    <include>unionpay/*</include>
+                </includes>
+                <filtering>false</filtering>
+            </resource>
+            <resource>
+                <directory>src/main/groovy</directory>
+            </resource>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.xml</include>
+                    <include>**/*.properties</include>
+                </includes>
+            </resource>
+        </resources>
+        <!--<defaultGoal>dependency:tree</defaultGoal>-->
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${targetJdk}</source>
+                    <target>${targetJdk}</target>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+                <version>${maven-compiler-plugin-version}</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.5.1</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${maven-source-plugin-version}</version>
+                <configuration>
+                    <attach>true</attach>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.eclipse.jetty</groupId>
+                <artifactId>jetty-maven-plugin</artifactId>
+                <version>${jetty9-version}</version>
+                <configuration>
+                    <webAppConfig>
+                        <contextPath>/${contextPath}</contextPath>
+                    </webAppConfig>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven-jar-plugin-version}</version>
+                <configuration>
+                    <archive>
+                        <addMavenDescriptor>
+                            ${addMavenDescriptor}
+                        </addMavenDescriptor>
+                    </archive>
+                    <includes>
+                        <include>${jar-include}</include>
+                        <jar-include>com/**</jar-include>
+                    </includes>
+                    <excludes>
+                        <exclude>${jar-exclude}</exclude>
+                    </excludes>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>site</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>3.0.4</version>
+                <configuration>
+                    <xmlOutput>true</xmlOutput>
+                    <xmlOutputDirectory>target/site</xmlOutputDirectory>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <locales>zh_CN</locales>
+                    <outputEncoding>
+                        ${project.build.sourceEncoding}
+                    </outputEncoding>
+                    <reportPlugins>
+
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>
+                                maven-project-info-reports-plugin
+                            </artifactId>
+                            <configuration>
+                                <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
+                                <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
+                            </configuration>
+                            <version>2.4</version>
+                        </plugin>
+
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-surefire-report-plugin</artifactId>
+                            <version>2.9</version>
+                        </plugin>
+
+                        <plugin>
+                            <groupId>org.apache.maven.plugins</groupId>
+                            <artifactId>maven-checkstyle-plugin</artifactId>
+                            <version>2.7</version>
+                            <configuration>
+                                <propertyExpansion>cacheFile=${project.build.directory}/checkstyle-cachefile
+                                </propertyExpansion>
+                                <excludes>org/*,org/**/*,test/**/*</excludes>
+                            </configuration>
+                        </plugin>
+
+
+                        <plugin>
+                            <groupId>org.codehaus.mojo</groupId>
+                            <artifactId>cobertura-maven-plugin</artifactId>
+                            <version>2.5.2</version>
+                            <configuration>
+                                <formats>
+                                    <format>html</format>
+                                    <format>xml</format>
+                                </formats>
+                                <quiet>true</quiet>
+                                <instrumentation>
+                                    <excludes>
+                                        <exclude>test/**/*.class</exclude>
+                                        <exclude>com/**/model/*.class</exclude>
+                                        <exclude>org/**/*.class</exclude>
+                                    </excludes>
+                                </instrumentation>
+                            </configuration>
+                        </plugin>
+
+                        <plugin>
+                            <groupId>org.codehaus.mojo</groupId>
+                            <artifactId>findbugs-maven-plugin</artifactId>
+                            <configuration>
+                                <threshold>High</threshold>
+                                <effort>Default</effort>
+                            </configuration>
+                            <version>2.5.2</version>
+                        </plugin>
+                    </reportPlugins>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+
+        <profile>
+            <id>testLocal</id>
+            <properties>
+                <redis.host>120.79.52.5</redis.host>
+                <mongo.uri>120.79.52.5:27017</mongo.uri>
+                <mongo.cost.write>ACKNOWLEDGED</mongo.cost.write>
+                <redis.mem.host>${redis.host}</redis.mem.host>
+                <redis.mem.port>6379</redis.mem.port>
+                <redis.chat.host>${redis.host}</redis.chat.host>
+                <redis.chat.host>${redis.host}</redis.chat.host>
+                <redis.im.host>${redis.host}</redis.im.host>
+                <redis.im.port>6379</redis.im.port>
+                <redis.user.host>${redis.host}</redis.user.host>
+                <redis.user.port>6379</redis.user.port>
+                <api.domain>http://test-api.lezhuale.com/</api.domain>
+                <user.domain>http://test-user.lezhuale.com/</user.domain>
+                <pic.domain>http://test-aiimg.sumeme.com/</pic.domain>
+                <im.domain>http://test-aiim.memeyule.com:6070</im.domain>
+                <ws.domain>http://test-ws.lezhuale.com:7010</ws.domain>
+                <!--<wsvideo.domain>http://39.106.130.135:7600</wsvideo.domain>-->
+                <gif.domain>http://record.lezhuale.com/</gif.domain>
+                <m.domain>http://test.lezhuale.com/</m.domain>
+                <pic.folder>/Users/Administrator/Downloads/</pic.folder>
+                <!--<log.error.target>stdout</log.error.target>-->
+            </properties>
+
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.codehaus.groovy</groupId>
+                    <artifactId>groovy-all</artifactId>
+                    <version>${groovy-all-compiler-version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+
+        </profile>
+
+        <profile>
+            <id>test</id>
+            <properties>
+                <redis.host>172.18.78.183</redis.host>
+                <redis.mem.host>${redis.host}</redis.mem.host>
+                <redis.mem.port>6379</redis.mem.port>
+                <mongo.uri>172.18.78.183:27017</mongo.uri>
+                <mongo.cost.write>ACKNOWLEDGED</mongo.cost.write>
+                <redis.chat.host>${redis.host}</redis.chat.host>
+                <redis.chat.port>6379</redis.chat.port>
+                <redis.im.host>${redis.host}</redis.im.host>
+                <redis.im.port>6379</redis.im.port>
+                <redis.user.host>${redis.host}</redis.user.host>
+                <redis.user.port>6379</redis.user.port>
+                <msg.thread.minSize>20</msg.thread.minSize>
+                <msg.thread.maxSize>30</msg.thread.maxSize>
+                <buss.thread.minSize>40</buss.thread.minSize>
+                <buss.thread.maxSize>50</buss.thread.maxSize>
+
+                <pic.folder>/empty/upload/</pic.folder>
+                <log.target>testlogfile</log.target>
+                <!--<log.error.target>logfile</log.error.target>-->
+                <log.web.level>DEBUG</log.web.level>
+                <groovy-scope>provided</groovy-scope>
+                <aspectj-scope>provided</aspectj-scope>
+
+                <pic.domain>http://test-aiimg.sumeme.com/</pic.domain>
+                <h5.domain>http://test.lezhuale.com/</h5.domain>
+                <api.domain>http://test-api.lezhuale.com/</api.domain>
+                <site.domain>http://test.lezhuale.com/</site.domain>
+                <user.domain>http://test-user.lezhuale.com/</user.domain>
+                <im.domain>http://test-aiim.lezhuale.com:6070</im.domain>
+                <ws.domain>http://test-ws.lezhuale.com:7010</ws.domain>
+                <!--<wsvideo.domain>http://test-v.17laihou.com:7600</wsvideo.domain>-->
+                <m.domain>http://test.lezhuale.com/</m.domain>
+             </properties>
+        </profile>
+
+        <profile>
+            <id>product</id>
+            <properties>
+                <redis.host>192.168.2.16</redis.host>
+                <redis.mem.host>${redis.host}</redis.mem.host>
+                <redis.mem.port>6380</redis.mem.port>
+                <redis.chat.host>${redis.host}</redis.chat.host>
+                <redis.chat.port>6383</redis.chat.port>
+                <redis.im.host>${redis.host}</redis.im.host>
+                <redis.im.port>${redis.chat.port}</redis.im.port>
+                <redis.user.host>${redis.host}</redis.user.host>
+                <redis.user.port>6381</redis.user.port>
+
+                <redis.pool.maxActive>500</redis.pool.maxActive>
+                <redis.pool.maxIdle>500</redis.pool.maxIdle>
+                <redis.pool.maxWait>-1</redis.pool.maxWait>
+                <redis.pool.testOnBorrow>true</redis.pool.testOnBorrow>
+                <redis.pool.testOnReturn>true</redis.pool.testOnReturn>
+
+                <chat.pool.maxActive>300</chat.pool.maxActive>
+                <chat.pool.maxIdle>300</chat.pool.maxIdle>
+                <chat.pool.maxWait>1500</chat.pool.maxWait>
+
+                <msg.thread.minSize>100</msg.thread.minSize>
+                <msg.thread.maxSize>200</msg.thread.maxSize>
+
+                <buss.thread.minSize>100</buss.thread.minSize>
+                <buss.thread.maxSize>100</buss.thread.maxSize>
+
+                <log.target>logfile</log.target>
+                <log.error.target>errorfile</log.error.target>
+                <log.web.level>INFO</log.web.level>
+                <pic.folder>/empty/upload/</pic.folder>
+
+                <groovy-scope>provided</groovy-scope>
+                <aspectj-scope>provided</aspectj-scope>
+
+                <!-- replset-->
+                <mongo.uri>192.168.2.17:20000,192.168.2.18:20000,192.168.2.19:20000</mongo.uri>
+                <mongo.cost.write>REPLICA_ACKNOWLEDGED</mongo.cost.write>
+            </properties>
+
+
+        </profile>
+
+
+        <profile>
+            <id>slf4j</id>
+            <activation>
+                <file>
+                    <exists>src/main/resources/logback.xml</exists>
+                </file>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                    <version>${slf4j-version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>jcl-over-slf4j</artifactId>
+                    <version>${slf4j-version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>ch.qos.logback</groupId>
+                    <artifactId>logback-classic</artifactId>
+                    <version>${logback-version}</version>
+                    <scope>runtime</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.logback-extensions</groupId>
+                    <artifactId>logback-ext-spring</artifactId>
+                    <version>0.1.1</version>
+                    <scope>runtime</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
+
+        <profile>
+            <id>normal</id>
+            <activation>
+                <file>
+                    <missing>src/main/groovy</missing>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <source>${targetJdk}</source>
+                            <target>${targetJdk}</target>
+                            <encoding>${project.build.sourceEncoding}</encoding>
+                            <compilerArguments>
+                                <javaAgentClass>lombok.core.Agent</javaAgentClass>
+                            </compilerArguments>
+                            <fork>true</fork>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok-version}</version>
+                            </dependency>
+                        </dependencies>
+                        <version>${maven-compiler-plugin-version}</version>
+                    </plugin>
+                </plugins>
+
+            </build>
+
+        </profile>
+        <profile>
+            <id>groovy</id>
+            <activation>
+                <file>
+                    <exists>src/main/groovy</exists>
+                </file>
+                <!--<property>
+                    <name>groovy</name>
+                    <value>true</value>
+                </property>-->
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>compile</id>
+                                <phase>compile</phase>
+                                <configuration>
+                                    <tasks>
+                                        <!--<mkdir dir="${project.basedir}/src/main/groovy"/>-->
+                                        <taskdef name="groovyc" classname="org.codehaus.groovy.ant.Groovyc">
+                                            <classpath refid="maven.compile.classpath"/>
+                                        </taskdef>
+                                        <mkdir dir="${project.build.outputDirectory}"/>
+                                        <groovyc destdir="${project.build.outputDirectory}"
+                                                 srcdir="${basedir}/src/main/groovy/" listfiles="true"
+                                                 encoding="${project.build.sourceEncoding}" indy="true">
+                                            <classpath refid="maven.compile.classpath"/>
+                                        </groovyc>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>test-compile</id>
+                                <phase>test-compile</phase>
+                                <configuration>
+                                    <tasks>
+                                        <mkdir dir="${basedir}/src/test/groovy"/>
+                                        <taskdef name="groovyc"
+                                                 classname="org.codehaus.groovy.ant.Groovyc">
+                                            <classpath refid="maven.test.classpath"/>
+                                        </taskdef>
+                                        <mkdir dir="${project.build.testOutputDirectory}"/>
+                                        <groovyc destdir="${project.build.testOutputDirectory}"
+                                                 srcdir="${basedir}/src/test/groovy/" listfiles="true"
+                                                 encoding="${project.build.sourceEncoding}" indy="true">
+                                            <classpath refid="maven.test.classpath"/>
+                                        </groovyc>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build> <dependencies>
+            <dependency>
+                <groupId>org.codehaus.groovy</groupId>
+                <artifactId>groovy-all</artifactId>
+                <version>${groovy-all-compiler-version}</version>
+                <scope>${groovy-scope}</scope>
+                <classifier>indy</classifier>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok-version}</version>
+                <scope>provided</scope>
+            </dependency>
+        </dependencies>
+        </profile>
+
+    </profiles>
+
+    <repositories>
+        <repository>
+            <id>sonatype-nexus-snapshots</id>
+            <name>Sonatype Nexus Snapshots</name>
+            <url>http://maven.aliyun.com/nexus/content/groups/public</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.java-websocket</groupId>
+            <artifactId>Java-WebSocket</artifactId>
+            <version>1.3.7</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>${servlet-api-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.servlet.jsp</groupId>
+            <artifactId>jsp-api</artifactId>
+            <version>${jsp-api-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>${commons-lang-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-lgpl</artifactId>
+            <version>${jackson-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-fileupload</groupId>
+            <artifactId>commons-fileupload</artifactId>
+            <version>1.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongo-java-driver</artifactId>
+            <version>2.14.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-mongodb</artifactId>
+            <version>1.5.6.RELEASE</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
+            <version>2.4.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <!--<version>2.1.0</version>-->
+            <version>2.4.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-redis</artifactId>
+            <!--<version>1.0.3.RELEASE</version>-->
+            <version>1.3.6.RELEASE</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jdom</groupId>
+            <artifactId>jdom2</artifactId>
+            <version>2.0.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>0.11.8</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.binarywang</groupId>
+            <artifactId>weixin-java-mp</artifactId>
+            <version>2.9.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>${groovy-all-compiler-version}</version>
+            <classifier>indy</classifier>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.3.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.3.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <version>${spring-version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.7.3</version>
+        </dependency>
+        <dependency>
+            <groupId>net.coobird</groupId>
+            <artifactId>thumbnailator</artifactId>
+            <version>0.4.7</version>
+        </dependency>
+        <!--<dependency>
+            <groupId>net.sourceforge</groupId>
+            <artifactId>pinyin4j</artifactId>
+            <version>2.5.0</version>
+        </dependency>-->
+        <!--<dependency>
+            <groupId>com.alipay.api</groupId>
+            <artifactId>alipay-sdk-java</artifactId>
+            <version>20170615110526</version>
+        </dependency>-->
+    </dependencies>
+
+</project>

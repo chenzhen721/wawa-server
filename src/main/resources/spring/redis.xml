@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"
+        default-lazy-init="true">
+
+
+    <bean id="mainJedisPoolConfig"
+           class="redis.clients.jedis.JedisPoolConfig"
+           p:maxTotal="${redis.pool.maxActive}"
+           p:maxIdle="${redis.pool.maxIdle}"
+           p:maxWaitMillis="${redis.pool.maxWait}"
+           p:testOnBorrow="${redis.pool.testOnBorrow}"
+           p:testOnReturn="${redis.pool.testOnReturn}"/>
+
+    <bean id="chatJedisPoolConfig"
+          class="redis.clients.jedis.JedisPoolConfig"
+          p:maxTotal="${chat.pool.maxActive}"
+          p:maxIdle="${chat.pool.maxIdle}"
+          p:maxWaitMillis="${chat.pool.maxWait}"
+          p:testOnBorrow="${redis.pool.testOnBorrow}"
+          p:testOnReturn="${redis.pool.testOnReturn}"/>
+
+    <bean id="imJedisPoolConfig"
+          class="redis.clients.jedis.JedisPoolConfig"
+          p:maxTotal="${im.pool.maxActive}"
+          p:maxIdle="${im.pool.maxIdle}"
+          p:maxWaitMillis="${im.pool.maxWait}"
+          p:testOnBorrow="${redis.pool.testOnBorrow}"
+          p:testOnReturn="${redis.pool.testOnReturn}"/>
+
+    <bean id="userConnectionFactory"
+          class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory" p:usePool="true"
+          p:hostName="${redis.user.host}" p:port="${redis.user.port}" p:timeout="${redis.timeout}"  p:poolConfig-ref="mainJedisPoolConfig"/>
+
+    <bean id="redisConnectionFactory"
+          class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory" p:usePool="true"
+          p:hostName="${redis.host}" p:port="${redis.port}" p:timeout="${redis.timeout}"  p:poolConfig-ref="mainJedisPoolConfig"/>
+
+    <bean id="liveConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory" p:usePool="true"
+          p:hostName="${redis.mem.host}" p:port="${redis.mem.port}"/>
+
+    <bean id="imConnectionFactory"
+          class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory" p:usePool="true"
+          p:hostName="${redis.im.host}" p:port="${redis.im.port}"  p:poolConfig-ref="imJedisPoolConfig"/>
+
+    <bean id="chatConnectionFactory"
+          class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory"
+          p:hostName="${redis.chat.host}" p:port="${redis.chat.port}"  p:poolConfig-ref="chatJedisPoolConfig"/>
+
+    <bean id="kgsConnectionFactory" class="org.springframework.data.redis.connection.jedis.JedisConnectionFactory"
+          p:hostName="${redis.kgs.host}" p:port="${redis.kgs.port}"/>
+
+    <bean id="mainRedis" class="org.springframework.data.redis.core.StringRedisTemplate"
+          p:connectionFactory-ref="redisConnectionFactory" />
+
+    <bean id="userRedis" class="org.springframework.data.redis.core.StringRedisTemplate"
+          p:connectionFactory-ref="userConnectionFactory" />
+
+    <bean id="liveRedis" class="org.springframework.data.redis.core.StringRedisTemplate"
+          p:connectionFactory-ref="liveConnectionFactory" />
+
+    <bean id="chatRedis" class="org.springframework.data.redis.core.StringRedisTemplate"
+          p:connectionFactory-ref="chatConnectionFactory" />
+
+    <bean id="imRedis" class="org.springframework.data.redis.core.StringRedisTemplate"
+          p:connectionFactory-ref="imConnectionFactory" />
+
+    <bean id="kgsUniqueRedis" class="org.springframework.data.redis.core.StringRedisTemplate"
+          p:connectionFactory-ref="kgsConnectionFactory" />
+
+    <bean id="userKGS" class="com.wawa.persistent.HighLowKGS"
+          p:nameSpace="users"
+          p:kgsRedis-ref="kgsUniqueRedis"
+          p:step="10"
+          p:offset="1201052">
+        <property name="prettys">
+            <bean class="com.wawa.persistent.PrettyBitSetFactoryBean" p:mongoTemplate-ref="mainMongo"/>
+        </property>
+   </bean>
+</beans>
