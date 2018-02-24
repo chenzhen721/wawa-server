@@ -2,7 +2,8 @@ package com.wawa.web
 
 import com.mongodb.BasicDBObject
 import com.mongodb.ReadPreference
-import com.wawa.anno.Rest
+import com.wawa.base.BaseController
+import com.wawa.base.anno.Rest
 import com.wawa.common.util.MsgDigestUtil
 import com.wawa.common.doc.Result
 import com.wawa.common.util.CoreExecutor
@@ -13,7 +14,7 @@ import com.wawa.common.util.BusiExecutor
 import com.wawa.common.util.MsgExecutor
 import com.wawa.model.Finance
 import com.wawa.model.UserType
-import com.wawa.web.api.Web
+import com.wawa.api.Web
 import org.apache.commons.lang.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

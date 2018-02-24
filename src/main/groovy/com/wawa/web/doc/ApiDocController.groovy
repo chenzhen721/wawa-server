@@ -1,10 +1,10 @@
 package com.wawa.web.doc
 
-import com.wawa.anno.Rest
+import com.wawa.base.anno.Rest
 import com.wawa.common.doc.MsgAction
 import com.wawa.common.doc.Result
 import com.wawa.common.doc.ResultCode
-import com.wawa.web.BaseController
+import com.wawa.base.BaseController
 
 /**
  * COMMEN PARAMS ONLY FOR API DOC

@@ -1,6 +1,6 @@
 package com.wawa.common.util;
 
-import com.wawa.web.StaticSpring;
+import com.wawa.base.StaticSpring;
 import groovy.transform.CompileStatic;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

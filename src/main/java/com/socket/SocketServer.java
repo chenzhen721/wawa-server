@@ -29,6 +29,7 @@ public class SocketServer extends WebSocketServer {
     public void onOpen(WebSocket conn, ClientHandshake handshake ) {
         broadcast( "new connection: " + handshake.getResourceDescriptor() );
         System.out.println( conn.getRemoteSocketAddress().getAddress().getHostAddress() + " entered the room!" );
+        //todo 判断是否可以连接
     }
 
     @Override

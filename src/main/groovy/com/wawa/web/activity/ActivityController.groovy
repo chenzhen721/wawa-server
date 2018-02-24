@@ -1,8 +1,8 @@
 package com.wawa.web.activity
 
 import com.mongodb.DBObject
-import com.wawa.anno.RestWithSession
-import com.wawa.web.BaseController
+import com.wawa.base.anno.RestWithSession
+import com.wawa.base.BaseController
 //import com.wawa.web.api.UserController
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory

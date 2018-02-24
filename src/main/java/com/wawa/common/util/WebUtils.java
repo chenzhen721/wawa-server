@@ -109,7 +109,7 @@ public class WebUtils extends org.springframework.web.util.WebUtils{
         return null;
     }
 
-    public static QueryBuilder fillTimeBetween(HttpServletRequest req){
+    /*public static QueryBuilder fillTimeBetween(HttpServletRequest req){
         QueryBuilder query = QueryBuilder.start();
         Date stime = getStime(req);
         Date etime = getEtime(req);
@@ -123,7 +123,7 @@ public class WebUtils extends org.springframework.web.util.WebUtils{
             }
         }
         return query;
-    }
+    }*/
 
 
 

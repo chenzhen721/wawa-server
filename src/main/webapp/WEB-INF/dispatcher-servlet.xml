@@ -48,7 +48,7 @@
     -->
 
 
-    <bean class="com.wawa.web.spring.InterceptorAnnotationAwareClassNameHandlerMapping" />
+    <bean class="com.wawa.base.spring.InterceptorAnnotationAwareClassNameHandlerMapping" />
     <!-- 使用annocation创建Controller的bean
     <mvc:default-servlet-handler/>
     <bean class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter"/>
@@ -61,7 +61,7 @@
             <!--</list>-->
         <!--</property>-->
     <!--</bean>-->
-    <bean id="sessionInterceptor" class="com.wawa.web.interceptor.OAuth2SimpleInterceptor"
+    <bean id="sessionInterceptor" class="com.wawa.api.interceptor.OAuth2SimpleInterceptor"
             p:mainMongo-ref="mainMongo" p:mainRedis-ref="mainRedis"   p:chatRedis-ref="chatRedis"  p:userKGS-ref="userKGS"/>
 
 

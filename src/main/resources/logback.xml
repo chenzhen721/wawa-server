@@ -114,7 +114,7 @@
     </logger>
 
     <!--记录慢查询-->
-    <logger name="com.wawa.web.support.ControllerSupport" level="${log.web.level}" additivity="false">
+    <logger name="com.wawa.base.support.ControllerSupport" level="${log.web.level}" additivity="false">
         <appender-ref ref="slowLogfile"/>
     </logger>
 

@@ -158,9 +158,9 @@
                 </includes>
                 <filtering>false</filtering>
             </resource>
-            <resource>
+            <!--<resource>
                 <directory>src/main/groovy</directory>
-            </resource>
+            </resource>-->
             <resource>
                 <directory>src/main/java</directory>
                 <includes>

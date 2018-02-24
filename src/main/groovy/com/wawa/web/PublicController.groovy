@@ -4,7 +4,9 @@ import com.mongodb.BasicDBObject
 import com.mongodb.DBCollection
 import com.mongodb.DBObject
 import com.mongodb.QueryBuilder
-import com.wawa.anno.Rest
+import com.wawa.base.BaseController
+import com.wawa.base.Crud
+import com.wawa.base.anno.Rest
 import com.wawa.common.doc.ParamKey
 import com.wawa.common.util.JSONUtil
 import com.wawa.common.util.WebUtils
@@ -13,9 +15,9 @@ import com.wawa.common.util.RandomExtUtils
 import com.wawa.common.doc.Result
 import com.wawa.common.util.KeyUtils
 import com.wawa.model.RoomType
-import com.wawa.web.api.UserController
-import com.wawa.web.api.UserWebApi
-import com.wawa.web.api.Web
+import com.wawa.api.UserController
+import com.wawa.api.UserWebApi
+import com.wawa.api.Web
 import org.apache.commons.lang.StringUtils
 import org.apache.commons.lang.math.NumberUtils
 import org.slf4j.Logger

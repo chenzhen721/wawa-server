@@ -69,13 +69,13 @@
     <bean id="kgsUniqueRedis" class="org.springframework.data.redis.core.StringRedisTemplate"
           p:connectionFactory-ref="kgsConnectionFactory" />
 
-    <bean id="userKGS" class="com.wawa.persistent.HighLowKGS"
+    <bean id="userKGS" class="com.wawa.base.persistent.HighLowKGS"
           p:nameSpace="users"
           p:kgsRedis-ref="kgsUniqueRedis"
           p:step="10"
           p:offset="1201052">
         <property name="prettys">
-            <bean class="com.wawa.persistent.PrettyBitSetFactoryBean" p:mongoTemplate-ref="mainMongo"/>
+            <bean class="com.wawa.base.persistent.PrettyBitSetFactoryBean" p:mongoTemplate-ref="mainMongo"/>
         </property>
    </bean>
 </beans>

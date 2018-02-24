@@ -2,10 +2,11 @@ package com.wawa.web
 
 import com.mongodb.DBCollection
 import com.mongodb.DBObject
-import com.wawa.anno.Rest
+import com.wawa.base.BaseController
+import com.wawa.base.anno.Rest
 import com.wawa.common.doc.Result
 import com.wawa.common.util.KeyUtils
-import com.wawa.web.api.Web
+import com.wawa.api.Web
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.ZSetOperations
