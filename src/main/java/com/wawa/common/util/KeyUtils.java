@@ -2,7 +2,6 @@ package com.wawa.common.util;
 
 
 import com.wawa.base.ext.RestExtension;
-import com.wawa.model.CatchPartnerType;
 import com.wawa.model.User;
 import groovy.transform.CompileStatic;
 

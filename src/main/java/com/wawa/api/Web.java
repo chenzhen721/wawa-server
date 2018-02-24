@@ -2,50 +2,28 @@ package com.wawa.api;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import com.mongodb.QueryBuilder;
 import com.mongodb.WriteConcern;
 import com.wawa.AppProperties;
-import com.wawa.base.StaticSpring;
 import com.wawa.api.interceptor.OAuth2SimpleInterceptor;
-import com.wawa.common.doc.Level;
-import com.wawa.common.doc.MongoKey;
+import com.wawa.base.StaticSpring;
 import com.wawa.common.doc.Param;
 import com.wawa.common.util.KeyUtils;
 import com.wawa.common.util.WebUtils;
-import com.wawa.base.ext.RestExtension;
 import com.wawa.model.BlackListType;
-import com.wawa.model.PlatformType;
-import com.wawa.model.StatusType;
-import com.wawa.model.User;
-import com.wawa.model.UserAwardType;
-import com.wawa.model.UserType;
 import groovy.transform.CompileStatic;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataAccessException;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.connection.SortParameters;
-import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.web.bind.ServletRequestUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.wawa.common.doc.MongoKey.*;
+import static com.wawa.common.doc.MongoKey._id;
 
 @CompileStatic
 public abstract class Web  extends WebUtils{
