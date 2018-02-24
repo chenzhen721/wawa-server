@@ -16,10 +16,6 @@ import java.util.Map;
  *
  * invokeDynamic
  *
- * 2013-06-09 15:55
- *
- *
- * @author: yangyang.cong@ttpod.com
  */
 //@Slf4j
 public class ControllerSupport7 extends ControllerSupport {

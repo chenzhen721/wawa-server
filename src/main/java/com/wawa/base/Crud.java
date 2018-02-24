@@ -25,7 +25,6 @@ import static com.wawa.common.doc.MongoKey._id;
 import static com.wawa.common.doc.MongoKey.timestamp;
 
 /**
- * 2013-06-03 11:30
  *
  * usage:
  *
@@ -37,7 +36,6 @@ import static com.wawa.common.doc.MongoKey.timestamp;
                 }
             })
 
- *@author : yangyang.cong@ttpod.com
  *
  */
 public final class Crud {

@@ -6,14 +6,7 @@ import java.lang.invoke.MethodHandle;
 import java.util.Map;
 
 /**
- * jdk 7 invoke Dynamic Support
- * 
- * date: 13-6-9 下午2:37
- *
- * @author: yangyang.cong@ttpod.com
  */
-
-
 abstract class MethodHandleExec implements MethodExec{
     final MethodHandle m;
     MethodHandleExec(MethodHandle m){

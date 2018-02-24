@@ -3,7 +3,6 @@ package com.wawa.common.util;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.mongodb.QueryBuilder;
 import com.wawa.AppProperties;
 import com.wawa.common.doc.ParamKey;
 import org.springframework.web.bind.ServletRequestUtils;
@@ -11,12 +10,13 @@ import org.springframework.web.bind.ServletRequestUtils;
 import javax.servlet.http.HttpServletRequest;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * date: 13-5-15 上午10:04
- *
- * @author: yangyang.cong@ttpod.com
  */
 public class WebUtils extends org.springframework.web.util.WebUtils{
 
@@ -86,9 +86,6 @@ public class WebUtils extends org.springframework.web.util.WebUtils{
         }
     }
 
-
-
-
     public static Date getEtime(HttpServletRequest request){
         return getTime(request,"etime");
     }
@@ -108,24 +105,6 @@ public class WebUtils extends org.springframework.web.util.WebUtils{
         }
         return null;
     }
-
-    /*public static QueryBuilder fillTimeBetween(HttpServletRequest req){
-        QueryBuilder query = QueryBuilder.start();
-        Date stime = getStime(req);
-        Date etime = getEtime(req);
-        if (stime !=null || etime !=null){
-            query.and("timestamp");
-            if(stime != null){
-                query.greaterThanEquals(stime.getTime());
-            }
-            if (etime != null){
-                query.lessThan(etime.getTime());
-            }
-        }
-        return query;
-    }*/
-
-
 
     static final Set<String> nocount_table = new HashSet<>();
     static {

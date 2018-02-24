@@ -2,9 +2,6 @@ package com.wawa.base.ext;
 
 /**
  *        扩展 system -> groovy
- *        date: 13-7-29 下午1:51
- *
- * @author: yangyang.cong@ttpod.com
  */
 public final class SystemStaticExtension {
 

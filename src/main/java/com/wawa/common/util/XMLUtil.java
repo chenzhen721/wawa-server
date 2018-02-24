@@ -1,4 +1,4 @@
-package com.weixin.util;
+package com.wawa.common.util;
 
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -96,11 +96,12 @@ public class XMLUtil {
      * @throws JDOMException
      */
     public static String getXMLEncoding(String strxml) throws JDOMException, IOException {
-        InputStream in = HttpClientUtil.String2Inputstream(strxml);
+        /*InputStream in = HttpClientUtil.String2Inputstream(strxml);
         SAXBuilder builder = new SAXBuilder();
         Document doc = builder.build(in);
         in.close();
-        return (String)doc.getProperty("encoding");
+        return (String)doc.getProperty("encoding");*/
+        return null;
     }
 
 

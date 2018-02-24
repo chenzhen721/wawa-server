@@ -5,20 +5,19 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
-import com.wawa.common.doc.MongoKey;
-import com.wawa.common.doc.ParamKey;
-import com.wawa.common.util.AuthCode;
-import com.wawa.base.persistent.KGS;
-import com.wawa.base.data.SimpleJsonView;
-import com.wawa.common.doc.Param;
-import com.wawa.common.util.KeyUtils;
-import com.wawa.model.Finance;
-import com.wawa.model.User;
-import com.wawa.model.UserAwardType;
-import com.wawa.model.UserType;
 import com.wawa.api.UserWebApi;
 import com.wawa.api.Web;
 import com.wawa.api.event.BuildUserObserver;
+import com.wawa.base.data.SimpleJsonView;
+import com.wawa.base.persistent.KGS;
+import com.wawa.common.doc.MongoKey;
+import com.wawa.common.doc.Param;
+import com.wawa.common.doc.ParamKey;
+import com.wawa.common.util.AuthCode;
+import com.wawa.common.util.KeyUtils;
+import com.wawa.model.Finance;
+import com.wawa.model.User;
+import com.wawa.model.UserType;
 import groovy.transform.CompileStatic;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -35,7 +34,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -117,12 +115,12 @@ public class OAuth2SimpleInterceptor extends HandlerInterceptorAdapter {
             String key = KeyUtils.accessToken(tokenValue);
             String clientId = Web.getClientId(request);
             //log.debug("qd : {} ip:{}  token:{}   path:{}", request.getParameter("qd"), clientId, tokenValue, request.getServletPath());
-            if (Web.isBanned(clientId)) { // 封掉客户端 uid
+            /*if (Web.isBanned(clientId)) { // 封掉客户端 uid
                 log.info("client is banned ip:{}  token:{}", clientId, tokenValue);
                 handleNotAuthorized(request, response, banned);
                 userRedis.delete(key);
                 return false;
-            }
+            }*/
             Map obj = userRedis.opsForHash().entries(key);
             if (!isUserInfoValid(obj) || userRedis.getExpire(key) <= 0){
                 try{
@@ -137,8 +135,8 @@ public class OAuth2SimpleInterceptor extends HandlerInterceptorAdapter {
                     if (userId != null) {
                         Integer cid = Integer.valueOf(userId);
                         //check_status(new BasicDBObject("status",obj.get("status")));
-                        if (cid > ROBOT_MAX)
-                            Web.day_login(request, cid);
+                        //if (cid > ROBOT_MAX)
+                            //Web.day_login(request, cid);
                     }
                 } catch (IllegalStateException e) {
                     handleNotAuthorized(request, response, e.getMessage());
@@ -267,21 +265,9 @@ public class OAuth2SimpleInterceptor extends HandlerInterceptorAdapter {
         check_status(user);
         Integer userId = (Integer) user.get("_id");
         Map<String, String> hashResult = Web.refreshUserInfoOfSession(req, userId, user);
-        //tongdun message
         if (Boolean.TRUE.equals(user.get("is_register"))) {
-            Web.day_register(req, user);
+            //Web.day_register(req, user);
         }
-        /*Integer priv = Integer.parseInt(user.get("priv").toString());
-        hashResult.put("_id", userId.toString());
-        hashResult.put("nick_name", (String) user.get("nick_name"));
-        hashResult.put("priv", priv.toString());
-        hashResult.put("pic", String.valueOf(user.get("pic")));
-        hashResult.put("level", String.valueOf(user.get("level")));
-
-        String token_key = KeyUtils.accessToken(access_token);
-        userRedis.opsForHash().putAll(token_key, hashResult);
-        userRedis.expire(token_key, THREE_DAY_SECONDS, TimeUnit.SECONDS);
-        userRedis.opsForValue().set(KeyUtils.USER.token(userId), access_token, THREE_DAY_SECONDS, TimeUnit.SECONDS);*/
         userRedis.opsForValue().set(KeyUtils.USER.token(userId), access_token, THREE_DAY_SECONDS, TimeUnit.SECONDS);
         return hashResult;
     }
@@ -375,10 +361,10 @@ public class OAuth2SimpleInterceptor extends HandlerInterceptorAdapter {
                 if( basicInfoWithTuid.local_user){
                     UserWebApi.synNo(tuid, newUser.get("mm_no"));
                 }
-                Map<String, Integer> award = new HashMap<>();
+                /*Map<String, Integer> award = new HashMap<>();
                 award.put("diamond", diamond);
                 Web.saveDiamondLog(Integer.valueOf(newUser.get(_id).toString()), UserAwardType.新用户注册, award);
-                newUser.put("is_register", Boolean.TRUE);
+                newUser.put("is_register", Boolean.TRUE);*/
             }
             BuildUserObserver.fireAfterBuildUserEvent(newUser);
             return newUser;

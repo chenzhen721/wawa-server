@@ -8,10 +8,7 @@ import static com.wawa.base.support.ControllerSupport7.staticTwoArg;
 import static com.wawa.base.support.ControllerSupport7.staticZeroArg;
 
 /**
- * TODO Comment here.
- * date: 13-6-9 下午3:53
  *
- * @author: yangyang.cong@ttpod.com
  */
 public class FreemarkerSupport7 extends FreemarkerSupport {
 

@@ -9,9 +9,6 @@ import java.io.Serializable;
  * 分页对象
  *
  *
- * date: 12-8-21 上午10:32
- *
- * @author: yangyang.cong@ttpod.com
  */
 @CompileStatic
 public class Pager implements Serializable{

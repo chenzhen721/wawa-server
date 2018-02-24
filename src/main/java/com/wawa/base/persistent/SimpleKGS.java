@@ -9,7 +9,6 @@ import org.springframework.data.redis.support.atomic.RedisAtomicInteger;
  * KGS server
  * date: 12-8-14 上午11:46
  *
- * @author: yangyang.cong@ttpod.com
  */
 public class SimpleKGS implements InitializingBean, KGS {
 

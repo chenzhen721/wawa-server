@@ -8,9 +8,6 @@ import org.apache.http.client.ResponseHandler;
 import java.io.IOException;
 
 /**
- * date: 12-11-16 下午1:35
- *
- * @author: yangyang.cong@ttpod.com
  */
 public abstract class HttpEntityHandler<T> implements ResponseHandler<T> {
 

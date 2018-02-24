@@ -9,8 +9,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 /**
- * @author: jiao.li
- * Date: 2016/6/21 19:50
  */
 public class SHA1Utils {
     private final int[] abcde = { 0x67452301, 0xefcdab89, 0x98badcfe,

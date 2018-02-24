@@ -6,9 +6,6 @@ import com.mongodb.DBObject;
 import java.util.Collections;
 
 /**
- * date: 13-3-22 下午4:16
- *
- * @author: yangyang.cong@ttpod.com
  */
 public interface MongoKey {
     String _id = "_id";

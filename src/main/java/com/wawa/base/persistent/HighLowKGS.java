@@ -6,9 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * KGS server
- * date: 12-8-14 上午11:46
- *
- * @author: yangyang.cong@ttpod.com
  */
 public class HighLowKGS extends SimpleKGS {
 

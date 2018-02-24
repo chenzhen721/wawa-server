@@ -13,9 +13,6 @@ import java.util.Map;
 
 /**
  *  转换为json 输出,处理 callBack
- * date: 12-8-21 下午2:08
- *
- * @author: yangyang.cong@ttpod.com
  */
 @CompileStatic
 public class SimpleJsonView implements View {

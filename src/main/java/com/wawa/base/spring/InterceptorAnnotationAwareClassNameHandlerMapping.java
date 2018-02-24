@@ -12,9 +12,6 @@ import javax.servlet.http.HttpServletRequest;
  *
  * 自动处理标记的拦截器
  *
- * date: 13-3-7 上午10:39
- *
- * @author: yangyang.cong@ttpod.com
  */
 public class InterceptorAnnotationAwareClassNameHandlerMapping extends ControllerClassNameHandlerMapping {
     protected HandlerExecutionChain getHandlerExecutionChain(Object handler, HttpServletRequest request) {

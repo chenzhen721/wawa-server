@@ -11,8 +11,6 @@ import java.util.List;
 
 /**
  *
- * date: 13-6-4 下午4:36
- * @author: yangyang.cong@ttpod.com
  */
 //@GroovyASTTransformation(phase= CompilePhase.SEMANTIC_ANALYSIS)
 //@GroovyASTTransformation(phase= CompilePhase.CANONICALIZATION)

@@ -22,7 +22,6 @@ import java.util.List;
 /**
  *http://jsoup.org/apidocs/org/jsoup/select/Selector.html
  *
- *@author congyangyang 2011-8-31
  */
 public abstract class JsoupUtil {
 	
@@ -85,7 +84,7 @@ public abstract class JsoupUtil {
    
    /**
 	* 符和要求的元素的text
-	* @param cssSelect css选择器
+	* @param cssParsed css选择器
 	* @return
 	*/
   public static Elements getElements(Document doc,Evaluator cssParsed){

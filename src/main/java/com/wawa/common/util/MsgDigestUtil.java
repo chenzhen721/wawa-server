@@ -9,7 +9,6 @@ import java.security.NoSuchAlgorithmException;
 /**
  * 枚举一些消息摘要算法，简化摘要代码
  *
- * @author yangyang.cong
  */
 @CompileStatic
 public enum MsgDigestUtil {

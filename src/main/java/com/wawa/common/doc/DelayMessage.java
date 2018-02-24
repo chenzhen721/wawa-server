@@ -7,9 +7,6 @@ import groovy.lang.Closure;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * date: 13-6-5 下午2:52
- *
- * @author: yangyang.cong@ttpod.com
  */
 public abstract class DelayMessage {
 

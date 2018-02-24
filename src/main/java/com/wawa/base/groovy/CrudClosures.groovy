@@ -3,8 +3,6 @@ package com.wawa.base.groovy
 import groovy.transform.CompileStatic
 
 /**
- * date: 13-6-5 下午12:50
- * @author: yangyang.cong@ttpod.com
  */
 @CompileStatic
 interface CrudClosures {

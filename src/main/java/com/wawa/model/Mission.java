@@ -1,9 +1,6 @@
 package com.wawa.model;
 
 /**
- * date: 13-3-3 上午11:06
- *
- * @author: yangyang.cong@ttpod.com
  */
 public enum Mission {
 

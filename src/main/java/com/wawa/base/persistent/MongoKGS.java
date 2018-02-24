@@ -7,9 +7,6 @@ import com.mongodb.DBObject;
 import com.wawa.common.doc.MongoKey;
 
 /**
- * date: 13-6-20 下午2:36
- *
- * @author: yangyang.cong@ttpod.com
  */
 public class MongoKGS implements KGS{
 

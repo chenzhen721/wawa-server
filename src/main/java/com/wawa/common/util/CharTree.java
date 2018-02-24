@@ -4,8 +4,6 @@ import java.util.*;
 
 /**
  * 解析字符串中是否包含字典中的关键字.
- * 
- * @author congyangyang 2011-9-13
  */
 public final class CharTree {
 
@@ -73,7 +71,7 @@ public final class CharTree {
 	}
 	/**
 	 * 增加字典
-	 * @param keyword,关键字
+	 * @param dics 关键字
 	 */
 	public CharTree addDic(String... dics) {
 		for (String keyword : dics) {

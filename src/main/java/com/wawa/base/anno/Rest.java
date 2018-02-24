@@ -6,9 +6,6 @@ import org.springframework.stereotype.Controller;
 import java.lang.annotation.*;
 
 /**
- * date: 13-6-4 下午5:25
- *
- * @author: yangyang.cong@ttpod.com
  */
 @Documented
 @Retention(RetentionPolicy.SOURCE)

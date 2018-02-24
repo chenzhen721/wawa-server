@@ -12,9 +12,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * date: 13-2-22 下午1:43
- *
- * @author: yangyang.cong@ttpod.com
  */
 public class StaticSpring implements ServletContextListener {
 

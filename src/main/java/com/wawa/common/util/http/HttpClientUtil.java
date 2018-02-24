@@ -36,9 +36,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
- * date: 2012.10.22
- *
- * @author: yangyang.cong@ttpod.com
  */
 @CompileStatic
 public abstract class HttpClientUtil {

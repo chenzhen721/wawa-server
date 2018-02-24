@@ -4,9 +4,6 @@ package com.wawa.common.doc;
  *
  * 请求中的入参与出参
  *
- * date: 12-8-21 上午9:58
- *
- * @author: yangyang.cong@ttpod.com
  */
 public interface ParamKey {
 

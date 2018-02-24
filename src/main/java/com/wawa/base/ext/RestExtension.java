@@ -10,9 +10,6 @@ import java.util.Map;
 
 /**
  *
- * date: 13-6-18 下午12:06
- *
- * @author: yangyang.cong@ttpod.com
  */
 public  final class RestExtension {
 

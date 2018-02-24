@@ -26,9 +26,6 @@ import java.util.Map;
  *      其中map为对象，可以输出为json 或者 xml
  *      String 就是跳转到对应模板
  *
- * date: 13-3-13 下午1:24
- *
- * @author: yangyang.cong@ttpod.com
  */
 //@Slf4j
 public class ControllerSupport extends MultiActionController {

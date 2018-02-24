@@ -15,9 +15,6 @@ import static com.wawa.common.util.WebUtils.$$;
  *
  * 获取数据库里面创建好的 靓号
  *
- * date: 13-3-11 上午11:55
- *
- * @author: yangyang.cong@ttpod.com
  */
 public class PrettyBitSetFactoryBean extends AbstractFactoryBean<BitSet> {
     static final Logger logger = LoggerFactory.getLogger(PrettyBitSetFactoryBean.class);

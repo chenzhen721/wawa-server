@@ -11,9 +11,6 @@ import java.io.Serializable;
  * JsonRawString :
  * This can be useful for injecting values already serialized in JSON.
  *
- * date: 13-12-15 下午2:17
- *
- * @author: yangyang.cong@ttpod.com
  */
 public final class JsonRawString implements Serializable{
     final String value;
