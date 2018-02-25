@@ -16,7 +16,7 @@ import javax.annotation.Resource;
 import static com.wawa.common.util.WebUtils.$$;
 
 /**
- * BaseController<
+ * BaseController
  */
 @CompileStatic
 @Slf4j

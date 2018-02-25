@@ -1,0 +1,63 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>菜鸟教程(runoob.com)</title>
+
+    <script type="text/javascript">
+        var ws
+
+        function WebSocketTest() {
+            if ("WebSocket" in window) {
+                alert("您的浏览器支持 WebSocket!");
+
+                // 打开一个 web socket
+                ws = new WebSocket("ws://localhost:8887/");
+
+                ws.onopen = function () {
+                    // Web Socket 已连接上，使用 send() 方法发送数据
+                    ws.send("发送数据");
+                    var node = document.createElement('div');
+                    node.innerHTML = "数据发送中...";
+                    document.getElementById('console').appendChild(node)
+                };
+
+                ws.onmessage = function (evt) {
+                    var received_msg = evt.data;
+                    var node = document.createElement('div');
+                    node.innerHTML = received_msg;
+                    document.getElementById('console').appendChild(node)
+                };
+
+                ws.onclose = function () {
+                    // 关闭 websocket
+                    var node = document.createElement('div');
+                    node.innerHTML = "连接已关闭...";
+                    document.getElementById('console').appendChild(node)
+                };
+            }
+
+            else {
+                // 浏览器不支持 WebSocket
+                alert("您的浏览器不支持 WebSocket!");
+            }
+        }
+        function send() {
+            ws.send('我发送了websocket数据')
+        }
+        function close() {
+            ws.close()
+        }
+    </script>
+
+</head>
+<body>
+
+<div id="sse">
+    <a href="javascript:WebSocketTest()">运行 WebSocket</a>
+    <a href="javascript:send()">发送</a>
+    <a href="javascript:close()">关闭</a>
+</div>
+<div id="console"></div>
+</body>
+</html>
