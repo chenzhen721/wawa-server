@@ -103,12 +103,12 @@
     </appender>
 
 
-    <logger name="com.ttpod.star.web.pay" level="DEBUG" additivity="false">
+    <logger name="com.wawa.web.pay" level="DEBUG" additivity="false">
         <appender-ref ref="paylogfile"/>
         <appender-ref ref="stdout"/>
     </logger>
 
-    <logger name="com.ttpod.star.web.api.trade" level="DEBUG" additivity="false">
+    <logger name="com.wawa.web.api.trade" level="DEBUG" additivity="false">
         <appender-ref ref="paylogfile"/>
         <appender-ref ref="stdout"/>
     </logger>
@@ -118,13 +118,14 @@
         <appender-ref ref="slowLogfile"/>
     </logger>
 
-    <logger name="com.ttpod.star.web" level="ERROR">
+    <logger name="com.wawa.web" level="ERROR">
         <appender-ref ref="${log.error.target}"/>
     </logger>
 
-    <logger name="com.ttpod.star.web.spring" level="INFO"/>
-    <logger name="com.ttpod.star.web" level="${log.web.level}"/>
-    <logger name="com.ttpod.star.common.util" level="${log.web.level}"/>
+    <logger name="com.wawa.web.spring" level="INFO"/>
+    <logger name="com.wawa.web" level="${log.web.level}"/>
+    <logger name="com.wawa.service" level="${log.web.level}"/>
+    <logger name="com.wawa.common.util" level="${log.web.level}"/>
 
     <root level="INFO">
         <appender-ref ref="${log.target}"/>

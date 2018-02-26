@@ -1,7 +1,5 @@
 package com.wawa.service
 
-import com.google.common.eventbus.EventBus
-import com.google.common.eventbus.Subscribe
 import com.mongodb.BasicDBObject
 import com.mongodb.DBCollection
 import com.mongodb.WriteConcern
@@ -21,6 +19,7 @@ import org.springframework.stereotype.Component
 import javax.annotation.PostConstruct
 import javax.annotation.Resource
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.FutureTask
@@ -31,6 +30,7 @@ import static com.wawa.common.util.WebUtils.$$
 @Component
 class ServerService {
     static final Logger logger = LoggerFactory.getLogger(ServerService.class)
+    public static ExecutorService executor = Executors.newCachedThreadPool()
 
     @Resource
     public MongoTemplate adminMongo
@@ -41,7 +41,7 @@ class ServerService {
     @Value('#{application[\'machine.port\']}')
     public int port
 
-    private MachineServerImpl machineServer
+    public MachineServerImpl machineServer
 
     @PostConstruct
     public void init() {
@@ -50,6 +50,12 @@ class ServerService {
         machineServer.start()
     }
 
+    /**
+     * 不等待结果返回
+     * @param device_id
+     * @param message
+     * @return
+     */
     public boolean sendMessage(String device_id, String message) {
         WebSocket socket = machineServer.getByDeviceId(device_id)
         if (socket == null) {
@@ -59,21 +65,36 @@ class ServerService {
         return true
     }
 
-    public Map send(String device_id, String message) {
-        //todo send
-
-
-        //todo 注册监听事件，收到监听事件返回结果
-
-        //todo 一旦返回结果或者超市要把监听事件取消掉
-
-
+    /**
+     * 这个方法会等待结果返回
+     * @param device_id
+     * @param message
+     * @return
+     */
+    public Map send(String device_id, Map message) {
+        WebSocket socket = machineServer.getByDeviceId(device_id)
+        if (socket == null) {
+            return null
+        }
+        def _id = "${device_id}_${System.nanoTime()}".toString()
+        try {
+            String msg = JSONUtil.beanToJson(message)
+            machineServer.getByDeviceId(device_id).send(msg)
+            Task task = new Task()
+            machineServer.register(_id, task)
+            Map result = task.get()
+            return result
+        } catch (Exception e) {
+            logger.error('machine socket server error.' + e)
+        } finally {
+            machineServer.unregister(_id)
+        }
+        return null
     }
 
     //监听事件
     class Task implements Callable<Map>{
-        public static ExecutorService executor = Executors.newCachedThreadPool()
-        private FutureTask futureTask
+        private FutureTask futureTask = new FutureTask(this)
         private Map result
 
         @Override
@@ -81,25 +102,28 @@ class ServerService {
             return result
         }
 
-        @Subscribe
-        public void func(Map msg) {
-            System.out.println("map msg: " + msg)
-            result = msg
-            executor.submit(futureTask)
+        public void setResult(Map result) {
+            this.result = result
         }
 
         public Map get() {
-            futureTask = new FutureTask(this)
             futureTask.get(10000l, TimeUnit.MILLISECONDS)
+        }
+
+        public void execute() {
+            executor.submit(futureTask)
+        }
+
+        public void cancel() {
+            futureTask.cancel(false)
         }
 
     }
 
-
     class MachineServerImpl extends WebSocketServer {
         private static Map<WebSocket, BasicDBObject> machines = new HashMap<>()
         private static Map<String, WebSocket> devices = new HashMap<>()
-        private EventBus eventBus = new EventBus()
+        private Map<String, Task> messageListener = new ConcurrentHashMap<>()
 
         public MachineServerImpl(InetSocketAddress address) {
             super(address)
@@ -115,8 +139,6 @@ class ServerService {
 
         @Override
         public void onOpen(WebSocket conn, ClientHandshake handshake) {
-            //broadcast("new connection: " + handshake.getResourceDescriptor());
-            //System.out.println(conn.getRemoteSocketAddress().getAddress().getHostAddress() + " entered the room!");
             String descriptor = handshake.getResourceDescriptor()
             if (StringUtils.isBlank(descriptor)) {
                 conn.send(Result.丢失必需参数.toJsonString())
@@ -149,8 +171,7 @@ class ServerService {
 
         @Override
         public void onClose(WebSocket conn, int code, String reason, boolean remote) {
-            //broadcast('' + conn + " has left the room!");
-            System.out.println("${conn} has left the room!")
+            logger.debug("${conn} has left the room!")
             //去掉对应的conn
             if (machines.containsKey(conn)) {
                 def machineinfo = machines.remove(conn)
@@ -158,13 +179,17 @@ class ServerService {
             }
         }
 
-        //todo 要做好返回值
+        //暂定 {_id: '123', action: '123', data: {}}这种形式
+        //
         @Override
         public void onMessage(WebSocket conn, String message) {
-            //broadcast(message);
-            System.out.println(conn + ": " + message)
-            Map msg = JSONUtil.jsonToMap(message)
-
+            logger.debug("" + conn + ": " + message)
+            Map msg = JSONUtil.jsonToMap(message) ?: [:]
+            String _id = (String) msg.get('_id')
+            Task task = messageListener.remove(_id)
+            if (task != null) {
+                task.execute()
+            }
         }
 
         @Override
@@ -190,12 +215,25 @@ class ServerService {
          * 注册监听事件
          * @param event
          */
-        public void register(Object event) {
-            eventBus.register(event)
+        public void register(String logId, Task task) {
+            if (!messageListener.containsKey(logId)) {
+                messageListener.put(logId, task)
+                TimerTask timerTask = new TimerTask() {
+                    @Override
+                    void run() {
+                        Task removal = messageListener.remove(logId)
+                        if (removal != null) {
+                            task.execute()
+                        }
+                    }
+                }
+                Timer timer = new Timer()
+                timer.schedule(timerTask, 60 * 1000L)
+            }
         }
 
-        public void unregister(Object event) {
-            eventBus.unregister(event)
+        public void unregister(String logId) {
+            messageListener.remove(logId)?.cancel()
         }
 
         private static Map<String, String> parseDescriptor(String path) {
@@ -219,51 +257,29 @@ class ServerService {
 
     public static void main(String[] args) throws InterruptedException, IOException {
         WebSocketImpl.DEBUG = true;
-        int port = 8887; // 843 flash policy port
+        int port = 8887 // 843 flash policy port
         try {
-            port = Integer.parseInt(args[0]);
+            port = Integer.parseInt(args[0])
         } catch (Exception ex) {
+            println ex
         }
-        InetSocketAddress inetAddress = new InetSocketAddress("", port);
-        com.socket.MachineSocketServer s = new com.socket.MachineSocketServer(inetAddress);
-        s.start();
-        System.out.println("ChatServer started on port: " + s.getPort());
+        ServerService server = new ServerService()
+        server.hostname = '127.0.0.1'
+        server.port = port
+        server.init()
+        WebSocketServer s = server.machineServer
+        s.start()
+        System.out.println("ChatServer started on port: " + s.getPort())
 
-        BufferedReader sysin = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader sysin = new BufferedReader(new InputStreamReader(System.in))
         while (true) {
-            String readin = sysin.readLine();
-            s.broadcast(readin);
+            String readin = sysin.readLine()
+            s.broadcast(readin)
             if (readin.equals("exit")) {
-                s.stop(1000);
-                break;
+                s.stop(1000)
+                break
             }
         }
-
-
-        FutureTask futureTask = new FutureTask(new Callable<String>() {
-            @Override
-            String call() throws Exception {
-                return "123"
-            }
-        })
-        new Thread(new Runnable() {
-            @Override
-            void run() {
-                println futureTask.get()
-            }
-        }).start()
-
-        new Thread(new Runnable() {
-            @Override
-            void run() {
-                println 'waiting'
-                Thread.sleep(2000l)
-                println 'execute'
-                ExecutorService service = Executors.newFixedThreadPool(1)
-                service.submit(futureTask)
-            }
-        }).start()
-
     }
 
 }

@@ -12,11 +12,12 @@
                 alert("您的浏览器支持 WebSocket!");
 
                 // 打开一个 web socket
-                ws = new WebSocket("ws://localhost:8887/");
+                ws = new WebSocket("ws://localhost:8887?device_id=ww-ec172f75321f");
 
                 ws.onopen = function () {
                     // Web Socket 已连接上，使用 send() 方法发送数据
-                    ws.send("发送数据");
+                    var msg = {_id: '123', action: '', data: {a: 'test', b: 'btest'}}
+                    ws.send(JSON.stringify(msg));
                     var node = document.createElement('div');
                     node.innerHTML = "数据发送中...";
                     document.getElementById('console').appendChild(node)
@@ -43,7 +44,8 @@
             }
         }
         function send() {
-            ws.send('我发送了websocket数据')
+            var msg = {_id: '123', action: '', data: {a: '我发送了websocket数据'}}
+            ws.send(JSON.stringify(msg));
         }
         function close() {
             ws.close()
