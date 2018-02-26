@@ -6,11 +6,13 @@ import com.wawa.base.BaseController
 import com.wawa.base.anno.Rest
 import com.wawa.common.doc.Result
 import com.wawa.common.util.JSONUtil
+import com.wawa.service.MachineServerService
 import org.apache.commons.lang.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.ServletRequestUtils
 
+import javax.annotation.Resource
 import javax.servlet.http.HttpServletRequest
 
 import static com.wawa.common.util.WebUtils.$$
@@ -23,8 +25,14 @@ class PublicController extends BaseController {
 
     Logger logger = LoggerFactory.getLogger(PublicController.class)
 
+    @Resource
+    MachineServerService serverService
+
     DBCollection machine() {
         adminMongo.getCollection('machine')
+    }
+    DBCollection record_log() {
+        logMongo.getCollection('record_log')
     }
 
     def blackword_list(HttpServletRequest req) {
@@ -52,11 +60,16 @@ class PublicController extends BaseController {
         return Result.success
     }
 
+    /**
+     * 请求分配对应的机器
+     * @param req
+     * @return
+     */
     def assign(HttpServletRequest req) {
         def app_id = req.getParameter('app_id')
         def ts = req.getParameter('ts')
         def sign = req.getParameter('sign')
-        def log_id = req.getParameter('record_id') //第三方ID
+        def record_id = req.getParameter('record_id') //第三方ID
         def user_id = req.getParameter('user_id') //第三方ID
         def device_id = req.getParameter('device_id') //第三方ID
         //todo 传入各种强力抓信息，有服务器来完成这个操作
@@ -68,10 +81,18 @@ class PublicController extends BaseController {
 
         //如果机器状态成功则记录当前结果
         //def log_id =
-
-
-
-
+        Map result = serverService.send(device_id, [action: 'status', ts: System.currentTimeMillis()])
+        if (result.get('code') != 1) {
+            return Result.error
+        }
+        def status = result.get('data') as Integer
+        if (status != 0) {
+            return [code: 1, data: [status: status]]
+        }
+        //todo 记录本次上机请求的参数
+        def _id = device_id + '_' + System.currentTimeMillis()
+        record_log().save($$(_id: _id,timestamp: System.currentTimeMillis()))
+        return [code: 1, data: [status: status, ws_url: 'ws://localhost:8887?device_id=', log_id: _id]]
     }
 
 

@@ -28,72 +28,32 @@ import java.util.concurrent.TimeUnit
 import static com.wawa.common.util.WebUtils.$$
 
 @Component
-class ServerService {
-    static final Logger logger = LoggerFactory.getLogger(ServerService.class)
+class CoreServerService {
+    static final Logger logger = LoggerFactory.getLogger(CoreServerService.class)
     public static ExecutorService executor = Executors.newCachedThreadPool()
 
     @Resource
-    public MongoTemplate adminMongo
+    public MongoTemplate logMongo
     @Resource
     public WriteConcern writeConcern
-    @Value('#{application[\'machine.hostname\']}')
+    @Resource
+    public MachineServerService machineServerService
+    @Value('#{application[\'core.hostname\']}')
     public String hostname
-    @Value('#{application[\'machine.port\']}')
+    @Value('#{application[\'core.port\']}')
     public int port
 
-    public MachineServerImpl machineServer
+    public CoreServerImpl coreServer
 
     @PostConstruct
     public void init() {
         InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port)
-        machineServer = new MachineServerImpl(inetSocketAddress)
-        machineServer.start()
-    }
-
-    /**
-     * 不等待结果返回
-     * @param device_id
-     * @param message
-     * @return
-     */
-    public boolean sendMessage(String device_id, String message) {
-        WebSocket socket = machineServer.getByDeviceId(device_id)
-        if (socket == null) {
-            return false
-        }
-        machineServer.getByDeviceId(device_id).send(message)
-        return true
-    }
-
-    /**
-     * 这个方法会等待结果返回
-     * @param device_id
-     * @param message
-     * @return
-     */
-    public Map send(String device_id, Map message) {
-        WebSocket socket = machineServer.getByDeviceId(device_id)
-        if (socket == null) {
-            return null
-        }
-        def _id = "${device_id}_${System.nanoTime()}".toString()
-        try {
-            String msg = JSONUtil.beanToJson(message)
-            machineServer.getByDeviceId(device_id).send(msg)
-            Task task = new Task()
-            machineServer.register(_id, task)
-            Map result = task.get()
-            return result
-        } catch (Exception e) {
-            logger.error('machine socket server error.' + e)
-        } finally {
-            machineServer.unregister(_id)
-        }
-        return null
+        coreServer = new CoreServerImpl(inetSocketAddress)
+        coreServer.start()
     }
 
     //监听事件
-    class Task implements Callable<Map>{
+    /*class Task implements Callable<Map>{
         private FutureTask futureTask = new FutureTask(this)
         private Map result
 
@@ -118,24 +78,23 @@ class ServerService {
             futureTask.cancel(false)
         }
 
-    }
+    }*/
 
-    class MachineServerImpl extends WebSocketServer {
-        private static Map<WebSocket, BasicDBObject> machines = new HashMap<>()
-        private static Map<String, WebSocket> devices = new HashMap<>()
-        private Map<String, Task> messageListener = new ConcurrentHashMap<>()
-
-        public MachineServerImpl(InetSocketAddress address) {
+    class CoreServerImpl extends WebSocketServer {
+        private static Map<WebSocket, BasicDBObject> players = new HashMap<>()
+        //private Map<String, Task> messageListener = new ConcurrentHashMap<>()
+        //可以考虑使用eventBus来处理对应的返回值回调问题
+        public CoreServerImpl(InetSocketAddress address) {
             super(address)
         }
 
-        DBCollection machine() {
-            adminMongo.getCollection('machine')
+        DBCollection record_log() {
+            logMongo.getCollection('record_log')
         }
 
-        public WebSocket getByDeviceId(String device_id) {
-            return devices.get(device_id)
-        }
+        /*public WebSocket getByDeviceId(String log_id) {
+            return logs.get(log_id)
+        }*/
 
         @Override
         public void onOpen(WebSocket conn, ClientHandshake handshake) {
@@ -151,44 +110,40 @@ class ServerService {
                 conn.close()
                 return
             }
-            if (!keypaire.containsKey('device_id')) {
+            if (!keypaire.containsKey('log_id')) {
                 conn.send(Result.丢失必需参数.toJsonString())
                 conn.close()
                 return
             }
-            def device_id = keypaire.get('device_id')
-            def deviceInfo = machine().findOne($$(_id: device_id)) as BasicDBObject
-            if (deviceInfo == null) {
+            def log_id = keypaire.get('log_id')
+            def logInfo = record_log().findOne($$(_id: log_id)) as BasicDBObject
+            if (logInfo == null) {
                 conn.send(Result.丢失必需参数.toJsonString())
                 conn.close()
                 return
             }
             //todo 每一步都要记录状态
-            deviceInfo['websocket'] = conn
-            machines.put(conn, deviceInfo)
-            devices.put(device_id, conn)
+            //todo 这里需要做排他 同一个record只能同时有一个客户端连接
+            logInfo['websocket'] = conn
+            players.put(conn, logInfo)
+        }
+
+        //收到来自客户端的操作请求，
+        @Override
+        public void onMessage(WebSocket conn, String message) {
+            logger.debug("" + conn + ": " + message)
+            Map msg = JSONUtil.jsonToMap(message) ?: [:]
+            String _id = (String) msg.get('_id')
+            //todo 向客户端发消息
+            //如果是请求结果，同步游戏结果至注册的callback接口
         }
 
         @Override
         public void onClose(WebSocket conn, int code, String reason, boolean remote) {
             logger.debug("${conn} has left the room!")
             //去掉对应的conn
-            if (machines.containsKey(conn)) {
-                def machineinfo = machines.remove(conn)
-                devices.remove(machineinfo['device_id'])
-            }
-        }
-
-        //暂定 {_id: '123', action: '123', data: {}}这种形式
-        //
-        @Override
-        public void onMessage(WebSocket conn, String message) {
-            logger.debug("" + conn + ": " + message)
-            Map msg = JSONUtil.jsonToMap(message) ?: [:]
-            String _id = (String) msg.get('_id')
-            Task task = messageListener.remove(_id)
-            if (task != null) {
-                task.execute()
+            if (players.containsKey(conn)) {
+                players.remove(conn)
             }
         }
 
@@ -200,9 +155,8 @@ class ServerService {
                 return
             }
             //去掉对应的conn
-            if (machines.containsKey(conn)) {
-                def machineinfo = machines.remove(conn)
-                devices.remove(machineinfo['device_id'])
+            if (players.containsKey(conn)) {
+                players.remove(conn)
             }
         }
 
@@ -215,7 +169,7 @@ class ServerService {
          * 注册监听事件
          * @param event
          */
-        public void register(String logId, Task task) {
+        /*public void register(String logId, Task task) {
             if (!messageListener.containsKey(logId)) {
                 messageListener.put(logId, task)
                 TimerTask timerTask = new TimerTask() {
@@ -230,11 +184,11 @@ class ServerService {
                 Timer timer = new Timer()
                 timer.schedule(timerTask, 60 * 1000L)
             }
-        }
+        }*/
 
-        public void unregister(String logId) {
+        /*public void unregister(String logId) {
             messageListener.remove(logId)?.cancel()
-        }
+        }*/
 
         private static Map<String, String> parseDescriptor(String path) {
             if (!path.startsWith('/?')) {
@@ -252,33 +206,6 @@ class ServerService {
                 result.put(key, value)
             }
             return result
-        }
-    }
-
-    public static void main(String[] args) throws InterruptedException, IOException {
-        WebSocketImpl.DEBUG = true;
-        int port = 8887 // 843 flash policy port
-        try {
-            port = Integer.parseInt(args[0])
-        } catch (Exception ex) {
-            println ex
-        }
-        ServerService server = new ServerService()
-        server.hostname = '127.0.0.1'
-        server.port = port
-        server.init()
-        WebSocketServer s = server.machineServer
-        s.start()
-        System.out.println("ChatServer started on port: " + s.getPort())
-
-        BufferedReader sysin = new BufferedReader(new InputStreamReader(System.in))
-        while (true) {
-            String readin = sysin.readLine()
-            s.broadcast(readin)
-            if (readin.equals("exit")) {
-                s.stop(1000)
-                break
-            }
         }
     }
 
