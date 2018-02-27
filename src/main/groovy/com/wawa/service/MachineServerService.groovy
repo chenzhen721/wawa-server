@@ -168,6 +168,7 @@ class MachineServerService {
             deviceInfo['websocket'] = conn
             machines.put(conn, deviceInfo)
             devices.put(device_id, conn)
+            conn.send('opening success!')
         }
 
         @Override
@@ -190,6 +191,7 @@ class MachineServerService {
             if (task != null) {
                 task.execute()
             }
+            conn.send('received msg.')
         }
 
         @Override
