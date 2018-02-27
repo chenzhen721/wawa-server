@@ -33,7 +33,7 @@ class CoreServerService {
     public void init() {
         InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port)
         coreServer = new CoreServerImpl(inetSocketAddress)
-        coreServer.start()
+        //coreServer.start()
     }
 
 

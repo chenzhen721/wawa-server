@@ -33,7 +33,7 @@ class MachineServerService {
             WebSocketImpl.DEBUG = true
             InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port)
             machineServer = new MachineServerImpl(inetSocketAddress)
-            machineServer.start()
+            //machineServer.start()
         } catch (Exception e) {
             logger.info("init server failed." + e)
         }
