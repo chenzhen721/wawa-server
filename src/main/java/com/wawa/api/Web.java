@@ -35,6 +35,7 @@ public abstract class Web  extends WebUtils{
     public static final StringRedisTemplate userRedis = (StringRedisTemplate) StaticSpring.get("userRedis");
     public static final MongoTemplate mainMongo = (MongoTemplate) StaticSpring.get("mainMongo");
     public static final MongoTemplate adminMongo = (MongoTemplate) StaticSpring.get("adminMongo");
+    public static final MongoTemplate logMongo = (MongoTemplate) StaticSpring.get("logMongo");
 
     public static final boolean isTest = AppProperties.get("api.domain").contains("test-");
 
