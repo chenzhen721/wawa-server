@@ -12,8 +12,8 @@
                 //alert("您的浏览器支持 WebSocket!");
 
                 // 打开一个 web socket
-                ws = new WebSocket("ws://localhost:8881/websocket?device_id=ww-ec172f75321f");
-//                ws = new WebSocket("ws://test-ws.doll520.com:8900?device_id=ww-ec172f75321f");
+//                ws = new WebSocket("ws://localhost:9001/websocket?device_id=ww-ec172f75321f");
+                ws = new WebSocket("ws://test-ws.doll520.com/websocket?device_id=ww-ec172f75321f");
 
                 ws.onopen = function () {
                     // Web Socket 已连接上，使用 send() 方法发送数据

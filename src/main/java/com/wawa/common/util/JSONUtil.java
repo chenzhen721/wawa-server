@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 
 import java.io.IOException;
@@ -95,7 +96,6 @@ public abstract class JSONUtil {
         MAPPER.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
         MAPPER.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        MAPPER.getSerializationConfig().withSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
 

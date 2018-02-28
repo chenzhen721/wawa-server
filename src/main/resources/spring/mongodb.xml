@@ -4,7 +4,7 @@
        xmlns:util="http://www.springframework.org/schema/util"
        xmlns:mongo="http://www.springframework.org/schema/data/mongo"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-				http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
+				http://www.springframework.org/schema/data/mongo http://www.springframework.org/schema/data/mongo/spring-mongo-1.7.xsd
 				http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd"
         default-lazy-init="true">
 
@@ -23,6 +23,15 @@
                         write-timeout="3000"
                         write-fsync="false"/>
     </mongo:mongo>
+
+    <mongo:mongo-client replica-set="${mongo.uri}" id="mongo">
+        <mongo:client-options connections-per-host="80"
+                              threads-allowed-to-block-for-connection-multiplier="6"
+                              connect-timeout="3000"
+                              max-wait-time="15000"
+                              socket-keep-alive="true"
+                              socket-timeout="18000"/>
+    </mongo:mongo-client>
 
     <util:constant static-field="com.mongodb.WriteConcern.${mongo.cost.write}" id="writeConcern"/>
 

@@ -13,7 +13,7 @@
 
     <context:property-placeholder location="classpath:application.properties" ignore-unresolvable="true"/>
 
-    <context:component-scan base-package="com.wawa.socket"/>
+    <context:component-scan base-package="com.wawa.web, com.wawa.socket"/>
 
     <mvc:annotation-driven/>
     <mvc:resources  location="/static/" mapping="/MP_*.txt"/>
@@ -33,28 +33,12 @@
     </websocket:handlers>-->
 
 
-    <websocket:handlers>
+    <websocket:handlers allowed-origins="*">
         <websocket:mapping path="/websocket" handler="websocket"/>
         <websocket:handshake-handler ref="handshakeHandler"/>
     </websocket:handlers>
 
-    <bean id="handshakeHandler" class="org.springframework.web.socket.server.support.DefaultHandshakeHandler">
-        <constructor-arg ref="upgradeStrategy"/>
-    </bean>
-
-    <bean id="upgradeStrategy" class="org.springframework.web.socket.server.jetty.JettyRequestUpgradeStrategy">
-        <constructor-arg ref="serverFactory"/>
-    </bean>
-
-    <bean id="serverFactory" class="org.eclipse.jetty.websocket.server.WebSocketServerFactory">
-        <constructor-arg>
-            <bean class="org.eclipse.jetty.websocket.api.WebSocketPolicy">
-                <constructor-arg value="SERVER"/>
-                <property name="inputBufferSize" value="8092"/>
-                <property name="idleTimeout" value="600000"/>
-            </bean>
-        </constructor-arg>
-    </bean>
+    <bean id="handshakeHandler" class="org.springframework.web.socket.server.support.DefaultHandshakeHandler"/>
 
 
 </beans>
