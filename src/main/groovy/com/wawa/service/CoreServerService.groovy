@@ -22,19 +22,9 @@ class CoreServerService {
     public WriteConcern writeConcern
     @Resource
     public MachineServerService machineServerService
-    @Value('#{application[\'core.hostname\']}')
-    public String hostname
-    @Value('#{application[\'core.port\']}')
-    public int port
 
     public CoreServerImpl coreServer
 
-    @PostConstruct
-    public void init() {
-        InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port)
-        coreServer = new CoreServerImpl(inetSocketAddress)
-        //coreServer.start()
-    }
 
 
 }

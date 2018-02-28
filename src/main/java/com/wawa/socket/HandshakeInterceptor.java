@@ -8,6 +8,7 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 import java.util.Map;
 
 public class HandshakeInterceptor extends HttpSessionHandshakeInterceptor {
+    //todo 加入连接时的校验逻辑
     @Override
     public boolean beforeHandshake(ServerHttpRequest request,
                                    ServerHttpResponse response, WebSocketHandler wsHandler,

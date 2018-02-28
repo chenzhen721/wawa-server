@@ -3,7 +3,9 @@ package com.wawa.web
 import com.mongodb.DBCollection
 import com.wawa.api.Web
 import com.wawa.base.BaseController
+import com.wawa.base.Crud
 import com.wawa.base.anno.Rest
+import com.wawa.common.doc.MongoKey
 import com.wawa.common.doc.Result
 import com.wawa.common.util.JSONUtil
 import com.wawa.service.MachineServerService
@@ -45,12 +47,14 @@ class PublicController extends BaseController {
     }
 
     /**
-     * 机器注册
+     * //todo 机器注册
      * @param req
      * @return
      */
     def machine_on(HttpServletRequest req) {
+        //就是机器对应的mac地址
         def device_id = ServletRequestUtils.getStringParameter(req, 'device_id')
+        //现场工作人员为机器分配的名称
         def device_name = ServletRequestUtils.getStringParameter(req, 'device_name')
         if (StringUtils.isBlank(device_id) || StringUtils.isBlank(device_name)) {
             return Result.error
@@ -60,7 +64,29 @@ class PublicController extends BaseController {
         return Result.success
     }
 
+    //todo 接口都需要加密验证
     /**
+     * 1 获取机器列表信息
+     * @param req
+     * @return
+     */
+    def list(HttpServletRequest req) {
+        def app_id = req.getParameter('app_id')
+        Crud.list(req, machine(), $$(app_id: app_id), MongoKey.ALL_FIELD, $$(order: -1)) {
+            //顺便每台机器的status, 视频流地址等信息
+        }
+    }
+
+    /**
+     * 获取单个机器的详情，包括机器状态和视频流地址等信息
+     * @param req
+     */
+    def info(HttpServletRequest req) {
+
+    }
+
+    /**
+     * 2 请求上机，成功后分配操作地址
      * 请求分配对应的机器
      * @param req
      * @return
@@ -75,6 +101,7 @@ class PublicController extends BaseController {
         //todo 传入各种强力抓信息，有服务器来完成这个操作
         //todo 获取sign
 
+        //todo 如果已查询到结果信息且在时间内则直接返回，未查到结果信息生成
         //如果校验通过，记录本次请求
         //service.getStatus
         //如果机器状态不对则直接返回失败
@@ -82,7 +109,7 @@ class PublicController extends BaseController {
         //如果机器状态成功则记录当前结果
         //def log_id =
         Map result = serverService.send(device_id, [action: 'status', ts: System.currentTimeMillis()])
-        if (result.get('code') != 1) {
+        if (result == null || result.get('code') != 1) {
             return Result.error
         }
         def status = result.get('data') as Integer
@@ -94,6 +121,5 @@ class PublicController extends BaseController {
         record_log().save($$(_id: _id,timestamp: System.currentTimeMillis()))
         return [code: 1, data: [status: status, ws_url: 'ws://localhost:8887?device_id=', log_id: _id]]
     }
-
 
 }

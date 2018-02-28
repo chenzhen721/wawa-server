@@ -2,43 +2,23 @@ package com.wawa.service
 
 import com.wawa.api.event.Task
 import com.wawa.common.util.JSONUtil
+import com.wawa.socket.WebSocketHelper
+import com.wawa.socket.WebsocketEndPoint
 import groovy.transform.CompileStatic
 import lombok.extern.slf4j.Slf4j
-import org.java_websocket.WebSocket
-import org.java_websocket.WebSocketImpl
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
-
-import javax.annotation.PostConstruct
+import org.springframework.web.socket.WebSocketSession
 
 @CompileStatic
 @Slf4j
 @Component
 class MachineServerService {
     static final Logger logger = LoggerFactory.getLogger(MachineServerService.class)
-
-    @Value('#{application[\'machine.hostname\']}')
-    public String hostname
-    @Value('#{application[\'machine.port\']}')
-    public int port
-
-    public MachineServerImpl machineServer
-
-    @PostConstruct
-    void init() {
-        logger.info("============--------------fuck!")
-        try {
-            WebSocketImpl.DEBUG = true
-            InetSocketAddress inetSocketAddress = new InetSocketAddress(hostname, port)
-            machineServer = new MachineServerImpl(inetSocketAddress)
-            //machineServer.start()
-        } catch (Exception e) {
-            logger.info("init server failed." + e)
-        }
-        logger.info("============--------------fuck end!")
-    }
+    @Autowired
+    public WebsocketEndPoint machineServer
 
     /**
      * 不等待结果返回
@@ -47,11 +27,11 @@ class MachineServerService {
      * @return
      */
     boolean sendMessage(String device_id, String message) {
-        WebSocket socket = machineServer.getByDeviceId(device_id)
+        WebSocketSession socket = machineServer.getByDeviceId(device_id)
         if (socket == null) {
             return false
         }
-        machineServer.getByDeviceId(device_id).send(message)
+        WebSocketHelper.send(machineServer.getByDeviceId(device_id), message)
         return true
     }
 
@@ -63,14 +43,14 @@ class MachineServerService {
      * @return
      */
     Map send(String device_id, Map message) {
-        WebSocket socket = machineServer.getByDeviceId(device_id)
+        WebSocketSession socket = machineServer.getByDeviceId(device_id)
         if (socket == null) {
             return null
         }
         def _id = "${device_id}_${System.nanoTime()}".toString()
         try {
             String msg = JSONUtil.beanToJson(message)
-            machineServer.getByDeviceId(device_id).send(msg)
+            WebSocketHelper.send(machineServer.getByDeviceId(device_id), msg)
             Task task = new Task()
             machineServer.register(_id, task)
             Map result = task.get()

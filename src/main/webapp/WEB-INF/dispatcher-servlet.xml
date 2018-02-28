@@ -24,21 +24,8 @@
             p:mainMongo-ref="mainMongo" p:mainRedis-ref="mainRedis"   p:chatRedis-ref="chatRedis"  p:userKGS-ref="userKGS"/>
 
 
-    <bean id="websocket" class="com.wawa.socket.WebsocketEndPoint"/>
-    <!--<websocket:handlers>
-        <websocket:mapping path="/websocket" handler="websocket"/>
-        <websocket:handshake-interceptors>
-            <bean class="com.wawa.socket.HandshakeInterceptor"/>
-        </websocket:handshake-interceptors>
-    </websocket:handlers>-->
 
 
-    <websocket:handlers allowed-origins="*">
-        <websocket:mapping path="/websocket" handler="websocket"/>
-        <websocket:handshake-handler ref="handshakeHandler"/>
-    </websocket:handlers>
-
-    <bean id="handshakeHandler" class="org.springframework.web.socket.server.support.DefaultHandshakeHandler"/>
 
 
 </beans>

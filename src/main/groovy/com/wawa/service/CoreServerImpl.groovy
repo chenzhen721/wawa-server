@@ -1,26 +1,13 @@
 package com.wawa.service
 
-import com.mongodb.BasicDBObject
-import com.mongodb.DBCollection
-import com.wawa.api.Web
-import com.wawa.common.doc.Result
-import com.wawa.common.util.JSONUtil
 import groovy.transform.CompileStatic
-import org.apache.commons.lang.StringUtils
-import org.java_websocket.WebSocket
-import org.java_websocket.handshake.ClientHandshake
-import org.java_websocket.server.WebSocketServer
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-
-import static com.wawa.common.util.WebUtils.$$
 
 /**
  * Created by Administrator on 2018/2/27.
  */
 @CompileStatic
-class CoreServerImpl extends WebSocketServer {
-    static final Logger logger = LoggerFactory.getLogger(CoreServerService.class)
+class CoreServerImpl  {
+    /*static final Logger logger = LoggerFactory.getLogger(CoreServerService.class)
     private static Map<WebSocket, BasicDBObject> players = new HashMap<>()
     //可以考虑使用eventBus来处理对应的返回值回调问题
     public CoreServerImpl(InetSocketAddress address) {
@@ -98,7 +85,7 @@ class CoreServerImpl extends WebSocketServer {
     @Override
     public void onStart() {
         logger.info("==============>Server started!")
-    }
+    }*/
 
     private static Map<String, String> parseDescriptor(String path) {
         if (!path.startsWith('/?')) {

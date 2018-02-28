@@ -332,10 +332,6 @@
         <profile>
             <id>testLocal</id>
             <properties>
-                <machine.hostname>127.0.0.1</machine.hostname>
-                <machine.port>8887</machine.port>
-                <core.hostname>127.0.0.1</core.hostname>
-                <core.port>8888</core.port>
                 <redis.host>120.79.52.5</redis.host>
                 <mongo.uri>120.79.52.5:27017</mongo.uri>
                 <mongo.cost.write>ACKNOWLEDGED</mongo.cost.write>
@@ -376,10 +372,6 @@
         <profile>
             <id>test</id>
             <properties>
-                <machine.hostname>172.18.78.183</machine.hostname>
-                <machine.port>8887</machine.port>
-                <core.hostname>172.18.78.183</core.hostname>
-                <core.port>8888</core.port>
                 <redis.host>172.18.78.183</redis.host>
                 <redis.mem.host>${redis.host}</redis.mem.host>
                 <redis.mem.port>6379</redis.mem.port>
@@ -626,11 +618,6 @@
     </repositories>
 
     <dependencies>
-        <dependency>
-            <groupId>org.java-websocket</groupId>
-            <artifactId>Java-WebSocket</artifactId>
-            <version>1.3.7</version>
-        </dependency>
         <!--<dependency>
             <groupId>javax.servlet</groupId>
             <artifactId>servlet-api</artifactId>

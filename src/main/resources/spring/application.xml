@@ -3,14 +3,15 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:context="http://www.springframework.org/schema/context"
        xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:websocket="http://www.springframework.org/schema/websocket"
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
-
-
-       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd
+                http://www.springframework.org/schema/websocket
+                http://www.springframework.org/schema/websocket/spring-websocket.xsd">
 
     <context:annotation-config/>
-    <context:component-scan base-package="com.wawa.service"/>
+    <context:component-scan base-package="com.wawa.service,com.wawa.socket"/>
 
 
     <!-- the service we want to make cacheable -->
@@ -18,6 +19,16 @@
     <context:property-placeholder  location="classpath*:*.properties" ignore-unresolvable="true" />
     <util:properties id="application" location="classpath:application.properties" />
 
+    <bean id="websocket" class="com.wawa.socket.WebsocketEndPoint"/>
+    <bean id="handshakeHandler" class="org.springframework.web.socket.server.support.DefaultHandshakeHandler"/>
+
+    <websocket:handlers allowed-origins="*">
+        <websocket:mapping path="/websocket" handler="websocket"/>
+        <websocket:handshake-handler ref="handshakeHandler"/>
+        <websocket:handshake-interceptors>
+            <bean class="com.wawa.socket.HandshakeInterceptor"/>
+        </websocket:handshake-interceptors>
+    </websocket:handlers>
     <!--<bean id="ehcache" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean"-->
           <!--p:configLocation="classpath:ehcache.xml"/>-->
     <!--<bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager" p:cacheManager-ref="ehcache"/>-->
