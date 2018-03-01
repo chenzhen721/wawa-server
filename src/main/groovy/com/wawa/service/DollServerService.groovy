@@ -1,6 +1,7 @@
 package com.wawa.service
 
 import com.mongodb.WriteConcern
+import com.wawa.socket.DollSocketServer
 import groovy.transform.CompileStatic
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -22,9 +23,9 @@ class CoreServerService {
     public WriteConcern writeConcern
     @Resource
     public MachineServerService machineServerService
+    @Resource
+    public DollSocketServer dollSocketServer
 
-    public CoreServerImpl coreServer
-
-
+    //todo 向服务端发送游戏通知等信息，注册开始结束监听器等
 
 }

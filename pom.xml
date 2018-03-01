@@ -28,7 +28,6 @@
         <aspectj-version>1.7.2</aspectj-version>
 
         <httpclient-version>4.2.3</httpclient-version>
-        <slf4j.version>1.7.5</slf4j.version>
         <javassist.version>3.17.1-GA</javassist.version>
         <jackson-version>1.9.12</jackson-version>
 
