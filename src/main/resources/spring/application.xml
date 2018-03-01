@@ -11,7 +11,7 @@
                 http://www.springframework.org/schema/websocket/spring-websocket.xsd">
 
     <context:annotation-config/>
-    <context:component-scan base-package="com.wawa.service,com.wawa.socket"/>
+    <context:component-scan base-package="com.wawa.service"/>
 
 
     <!-- the service we want to make cacheable -->
@@ -19,16 +19,26 @@
     <context:property-placeholder  location="classpath*:*.properties" ignore-unresolvable="true" />
     <util:properties id="application" location="classpath:application.properties" />
 
-    <bean id="websocket" class="com.wawa.socket.WebsocketEndPoint"/>
+    <bean id="machine" class="com.wawa.socket.MachineSocketServer"/>
+    <bean id="doll" class="com.wawa.socket.DollSocketServer"/>
     <bean id="handshakeHandler" class="org.springframework.web.socket.server.support.DefaultHandshakeHandler"/>
 
     <websocket:handlers allowed-origins="*">
-        <websocket:mapping path="/websocket" handler="websocket"/>
+        <websocket:mapping path="/machine" handler="machine"/>
+        <websocket:mapping path="/doll" handler="doll"/>
         <websocket:handshake-handler ref="handshakeHandler"/>
         <websocket:handshake-interceptors>
-            <bean class="com.wawa.socket.HandshakeInterceptor"/>
+            <bean class="com.wawa.socket.MachineHandshakeInterceptor"/>
         </websocket:handshake-interceptors>
     </websocket:handlers>
+    <websocket:handlers allowed-origins="*">
+        <websocket:mapping path="/doll" handler="doll"/>
+        <websocket:handshake-handler ref="handshakeHandler"/>
+        <websocket:handshake-interceptors>
+            <bean class="com.wawa.socket.DollHandshakeInterceptor"/>
+        </websocket:handshake-interceptors>
+    </websocket:handlers>
+
     <!--<bean id="ehcache" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean"-->
           <!--p:configLocation="classpath:ehcache.xml"/>-->
     <!--<bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager" p:cacheManager-ref="ehcache"/>-->

@@ -87,21 +87,4 @@ class CoreServerImpl  {
         logger.info("==============>Server started!")
     }*/
 
-    private static Map<String, String> parseDescriptor(String path) {
-        if (!path.startsWith('/?')) {
-            return null
-        }
-        path = path.substring(2)
-        def params = path.split('=') as String[]
-        if (params.length % 2 != 0) {
-            return null
-        }
-        Map<String, String> result = new HashMap<>()
-        for(int i = 0; i < params.length; i+=2) {
-            String key = params[i]
-            String value = params[i+1]
-            result.put(key, value)
-        }
-        return result
-    }
 }

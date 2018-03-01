@@ -3,7 +3,7 @@ package com.wawa.service
 import com.wawa.api.event.Task
 import com.wawa.common.util.JSONUtil
 import com.wawa.socket.WebSocketHelper
-import com.wawa.socket.WebsocketEndPoint
+import com.wawa.socket.MachineSocketServer
 import groovy.transform.CompileStatic
 import lombok.extern.slf4j.Slf4j
 import org.slf4j.Logger
@@ -18,7 +18,7 @@ import org.springframework.web.socket.WebSocketSession
 class MachineServerService {
     static final Logger logger = LoggerFactory.getLogger(MachineServerService.class)
     @Autowired
-    public WebsocketEndPoint machineServer
+    public MachineSocketServer machineServer
 
     /**
      * 不等待结果返回
