@@ -37,7 +37,7 @@ class MachineServerService {
 
     /**
      * 这个方法会等待结果返回
-     * 暂定 {_id: '123', action: '123', data: {}}这种形式
+     * 暂定 {_id: '123', action: '123', data: {}, ts: 123}这种形式
      * @param device_id
      * @param message
      * @return
@@ -49,6 +49,7 @@ class MachineServerService {
         }
         def _id = "${device_id}_${System.nanoTime()}".toString()
         try {
+            message.put("id", _id)
             String msg = JSONUtil.beanToJson(message)
             WebSocketHelper.send(machineServer.getByDeviceId(device_id), msg)
             Task task = new Task()

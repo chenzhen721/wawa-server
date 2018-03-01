@@ -78,7 +78,14 @@ public class MachineSocketServer extends TextWebSocketHandler {
         deviceInfo.put("websocket", session);
         machines.put(session.getId(), deviceInfo);
         devices.put(device_id, session);
-        WebSocketHelper.send(session, "opening success!");
+        /*Map<String, Object> msg = new HashMap<>();
+        msg.put("id", "123");
+        msg.put("action", "STATUS");
+        WebSocketHelper.send(session, JSONUtil.beanToJson(msg));
+        Task task = new Task();
+        this.register((String) msg.get("id"), task);
+        Map result = task.get();
+        logger.info(JSONUtil.beanToJson(result));*/
     }
 
     /**
@@ -90,18 +97,25 @@ public class MachineSocketServer extends TextWebSocketHandler {
      */
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        logger.debug("" + session + ": " + message);
-        if (StringUtils.isBlank(message.getPayload())) {
-            return;
-        }
-        Map msg = JSONUtil.jsonToMap(message.getPayload());
+        try {
+            logger.info("" + session + ": " + message.getPayload());
+            if (StringUtils.isBlank(message.getPayload())) {
+                return;
+            }
+            Map msg = JSONUtil.jsonToMap(message.getPayload());
 
-        String _id = (String) msg.get("_id");
-        Task task = messageListener.remove(_id);
-        if (task != null) {
-            task.execute(executor);
+            String _id = (String) msg.get("id");
+            if (_id != null) {
+                Task task = messageListener.remove(_id);
+                if (task != null) {
+                    task.setResult(msg);
+                    task.execute(executor);
+                }
+            }
+            //WebSocketHelper.send(session, "received msg.");
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        WebSocketHelper.send(session, "received msg.");
     }
 
     /**

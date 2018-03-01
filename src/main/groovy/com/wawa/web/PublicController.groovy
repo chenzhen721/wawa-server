@@ -82,7 +82,9 @@ class PublicController extends BaseController {
      * @param req
      */
     def info(HttpServletRequest req) {
-
+        def device_id = req.getParameter('device_id')
+        def result = serverService.send(device_id, [action: 'status', ts: System.currentTimeMillis()])
+        [code: 1, data: result]
     }
 
     /**
