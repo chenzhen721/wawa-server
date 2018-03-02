@@ -57,27 +57,31 @@ public class MachineSocketServer extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         logger.info("建立连接，开始初始化!" + session);
-        URI uri = session.getUri();
-        String descriptor = uri.getQuery();
-        //todo 这些操作都可以放到interceptor中完成
-        if (StringUtils.isBlank(descriptor)) {
-            WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
-            return;
+        try {
+            URI uri = session.getUri();
+            String descriptor = uri.getQuery();
+            //todo 这些操作都可以放到interceptor中完成
+            if (StringUtils.isBlank(descriptor)) {
+                WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
+                return;
+            }
+            Map<String, String> keypaire = StringHelper.parseUri(descriptor);
+            if (keypaire == null) {
+                WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
+                return;
+            }
+            if (!keypaire.containsKey("device_id")) {
+                WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
+                return;
+            }
+            String device_id = keypaire.get("device_id");
+            DBObject deviceInfo = machine().findOne($$(_id, device_id));
+            deviceInfo.put("websocket", session);
+            machines.put(session.getId(), deviceInfo);
+            devices.put(device_id, session);
+        } catch (Exception e) {
+            logger.error("connection failed." + session);
         }
-        Map<String, String> keypaire = StringHelper.parseUri(descriptor);
-        if (keypaire == null) {
-            WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
-            return;
-        }
-        if (!keypaire.containsKey("device_id")) {
-            WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
-            return;
-        }
-        String device_id = keypaire.get("device_id");
-        DBObject deviceInfo = machine().findOne($$(_id, device_id));
-        deviceInfo.put("websocket", session);
-        machines.put(session.getId(), deviceInfo);
-        devices.put(device_id, session);
         /*Map<String, Object> msg = new HashMap<>();
         msg.put("id", "123");
         msg.put("action", "STATUS");
@@ -114,7 +118,7 @@ public class MachineSocketServer extends TextWebSocketHandler {
             }
             //WebSocketHelper.send(session, "received msg.");
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("illigal session:" + session + ", message:" + message.getPayload());
         }
     }
 
@@ -126,7 +130,7 @@ public class MachineSocketServer extends TextWebSocketHandler {
      */
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        logger.info("${conn} has left the room!");
+        logger.info(session + " has left the room! status:" + status);
         //去掉对应的conn
         if (machines.containsKey(session.getId())) {
             DBObject machineinfo = machines.remove(session.getId());
@@ -142,11 +146,11 @@ public class MachineSocketServer extends TextWebSocketHandler {
      */
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
+        logger.error("sth wrong happened on server." + exception);
         if (session == null) {
-            // some errors like port binding failed may not be assignable to a specific websocket
             return;
         }
-        //去掉对应的conn
+        //去掉对应的session
         if (machines.containsKey(session.getId())) {
             DBObject machineinfo = machines.remove(session.getId());
             devices.remove(String.valueOf(machineinfo.get("device_id")));
