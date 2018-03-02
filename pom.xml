@@ -44,7 +44,8 @@
         <m.domain>http://www.lezhuale.com/</m.domain>
         <gif.domain>http://record.lezhuale.com/</gif.domain>
         <im.domain>http://aiim.17laihou.com:6070</im.domain>
-        <ws.domain>http://ws.lezhuale.com:7010</ws.domain>
+        <server.domain>ws://ws.doll520.com/machine</server.domain>
+        <stream.domain>ws://ws.doll520.com/machine</stream.domain>
         <!--<wsvideo.domain>http://v.17laihou.com</wsvideo.domain>-->
 
         <redis.timeout>15000</redis.timeout>
@@ -342,11 +343,12 @@
                 <redis.im.port>6379</redis.im.port>
                 <redis.user.host>${redis.host}</redis.user.host>
                 <redis.user.port>6379</redis.user.port>
-                <api.domain>http://test-api.lezhuale.com/</api.domain>
+                <api.domain>http://localhost:9001/</api.domain>
                 <user.domain>http://test-user.lezhuale.com/</user.domain>
                 <pic.domain>http://test-aiimg.sumeme.com/</pic.domain>
                 <im.domain>http://test-aiim.memeyule.com:6070</im.domain>
-                <ws.domain>http://test-ws.lezhuale.com:7010</ws.domain>
+                <server.domain>ws://test-ws.doll520.com/machine</server.domain>
+                <stream.domain>ws://test-ws.doll520.com/machine</stream.domain>
                 <!--<wsvideo.domain>http://39.106.130.135:7600</wsvideo.domain>-->
                 <gif.domain>http://record.lezhuale.com/</gif.domain>
                 <m.domain>http://test.lezhuale.com/</m.domain>
@@ -400,7 +402,8 @@
                 <site.domain>http://test.lezhuale.com/</site.domain>
                 <user.domain>http://test-user.lezhuale.com/</user.domain>
                 <im.domain>http://test-aiim.lezhuale.com:6070</im.domain>
-                <ws.domain>http://test-ws.lezhuale.com:7010</ws.domain>
+                <server.domain>ws://test-ws.doll520.com/machine</server.domain>
+                <stream.domain>ws://test-ws.doll520.com/machine</stream.domain>
                 <!--<wsvideo.domain>http://test-v.17laihou.com:7600</wsvideo.domain>-->
                 <m.domain>http://test.lezhuale.com/</m.domain>
             </properties>
