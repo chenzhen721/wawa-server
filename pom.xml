@@ -391,7 +391,7 @@
 
                 <pic.folder>/empty/upload/</pic.folder>
                 <log.target>testlogfile</log.target>
-                <!--<log.error.target>logfile</log.error.target>-->
+                <log.error.target>testlogfile</log.error.target>
                 <log.web.level>DEBUG</log.web.level>
                 <groovy-scope>provided</groovy-scope>
                 <aspectj-scope>provided</aspectj-scope>

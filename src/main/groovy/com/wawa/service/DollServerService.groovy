@@ -14,18 +14,18 @@ import javax.annotation.Resource
 
 @CompileStatic
 @Component
-class CoreServerService {
-    static final Logger logger = LoggerFactory.getLogger(CoreServerService.class)
+class DollServerService {
+    static final Logger logger = LoggerFactory.getLogger(DollServerService.class)
 
-    @Resource
+    /*@Resource
     public MongoTemplate logMongo
     @Resource
     public WriteConcern writeConcern
     @Resource
-    public MachineServerService machineServerService
-    @Resource
     public DollSocketServer dollSocketServer
+    @Resource
+    public
 
-    //todo 向服务端发送游戏通知等信息，注册开始结束监听器等
+    //todo 向服务端发送游戏通知等信息，注册开始结束监听器等*/
 
 }

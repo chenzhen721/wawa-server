@@ -25,7 +25,6 @@
 
     <websocket:handlers allowed-origins="*">
         <websocket:mapping path="/machine" handler="machine"/>
-        <websocket:mapping path="/doll" handler="doll"/>
         <websocket:handshake-handler ref="handshakeHandler"/>
         <websocket:handshake-interceptors>
             <bean class="com.wawa.socket.MachineHandshakeInterceptor"/>

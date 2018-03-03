@@ -45,7 +45,7 @@ class MachineServerService {
     Map send(String device_id, Map message) {
         WebSocketSession socket = machineServer.getByDeviceId(device_id)
         if (socket == null) {
-            return null
+            return [code: 0]
         }
         def _id = "${device_id}_${System.nanoTime()}".toString()
         try {
@@ -61,7 +61,7 @@ class MachineServerService {
         } finally {
             machineServer.unregister(_id)
         }
-        return null
+        return [code: 0]
     }
 
 }
