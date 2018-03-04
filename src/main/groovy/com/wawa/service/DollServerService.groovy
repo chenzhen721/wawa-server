@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 
+import javax.annotation.PostConstruct
 import javax.annotation.Resource
 
 import static com.wawa.common.doc.MongoKey._id
@@ -37,6 +38,10 @@ class DollServerService {
     @Resource
     private MachineServerService machineServerService
 
+    @PostConstruct
+    public void init() {
+        dollSocketServer.register(this)
+    }
 
     DBCollection record_log() {
         return logMongo.getCollection("record_log")
@@ -49,7 +54,7 @@ class DollServerService {
         try {
             DBObject playerinfo = (DBObject) messageEvent.getData()
             TextMessage message = messageEvent.getMessage()
-            WebSocketSession session = messageEvent.getSession()
+            WebSocketSession session = (WebSocketSession)playerinfo.get("player")
             String deviceId = String.valueOf(playerinfo.get("device_id"))
             String status = String.valueOf(playerinfo.get("status"))
             if (!"0".equals(status)) {
@@ -70,20 +75,27 @@ class DollServerService {
                 if ("u".equals(data)) {
                     op.put("FBtime", playerinfo.get("FBtime"))
                     op.put("direction", 0)
+                    machineServerService.sendMessage(deviceId, JSONUtil.beanToJson(req))
+                    return
                 }
                 if ("d".equals(data)) {
                     op.put("FBtime", playerinfo.get("FBtime"))
                     op.put("direction", 1)
+                    machineServerService.sendMessage(deviceId, JSONUtil.beanToJson(req))
+                    return
                 }
                 if ("l".equals(data)) {
                     op.put("LRtime", playerinfo.get("LRtime"))
                     op.put("direction", 2)
+                    machineServerService.sendMessage(deviceId, JSONUtil.beanToJson(req))
+                    return
                 }
                 if ("r".equals(data)) {
                     op.put("LRtime", playerinfo.get("LRtime"))
                     op.put("direction", 3)
+                    machineServerService.sendMessage(deviceId, JSONUtil.beanToJson(req))
+                    return
                 }
-                machineServerService.sendMessage(deviceId, JSONUtil.beanToJson(req))
                 if ("doll".equals(data)) {
                     playerinfo.put("status", 1)
                     op.put("doll", 1)
@@ -102,12 +114,12 @@ class DollServerService {
                     //更新记录
                     BasicDBObject update = $$("status", 1)
                     update.append("result", result.get("data"))
-                    record_log().update($$(_id, String.valueOf(playerinfo.get("_id"))), update, false, false, writeConcern)
+                    record_log().update($$(_id, String.valueOf(playerinfo.get("_id"))), $$($set: update), false, false, writeConcern)
                     session.close()
                 }
             }
         } catch (Exception e) {
-            logger.error("${messageEvent.toString()}, exception: ${e}")
+            logger.error("exception: ${e}".toString())
         }
     }
 

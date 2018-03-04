@@ -50,12 +50,7 @@
     <meta name="x5-page-mode" content="app">
     <!-- windows phone 点击无高光 -->
     <meta name="msapplication-tap-highlight" content="no">
-    <!-- iOS 图标 begin -->
-    <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon-57x57-precomposed.png"/>
-    <!-- iPhone 和 iTouch，默认 57x57 像素，必须有 -->
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/apple-touch-icon-114x114-precomposed.png"/>
-    <!-- Retina iPhone 和 Retina iTouch，114x114 像素，可以没有，但推荐有 -->
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/apple-touch-icon-144x144-precomposed.png"/>
+    <script src="http://code.jquery.com/jquery-2.2.4.js" integrity="sha256-iT6Q9iMJYuQiMWNd9lDyBUStIq/8PuOW33aOqmvFpqI=" crossorigin="anonymous"></script>
     <script type="text/javascript">
         var ws
 
@@ -97,11 +92,44 @@
             }
         }
         function send() {
-            var msg = {_id: '123', action: '', data: {a: '我发送了websocket数据'}}
+            var msg = {_id: '123', action: '', data: {a: '我发送了websocket数据'}};
             ws.send(JSON.stringify(msg));
         }
         function close() {
             ws.close()
+        }
+        function assign() {
+            var url = "http://localhost:9001/public/assign";
+            $ = jQuery;
+            var param = {
+                "app_id": "wawa_default", "record_id": Math.random(),
+                "user_id": Math.random(), "device_id": "ww-f48e387fb884", "lw": 100,
+                "hw": 100, "htl": 100
+            };
+            $.get(url, param, function (data) {
+                alert(data)
+            });
+        }
+        var ws_url = "ws://localhost:9001/doll?device_id=ww-f48e387fb884&log_id=ww-f48e387fb884_1520119356923";
+        ws = new WebSocket(ws_url);
+
+        ws.onopen = function (evt) {
+            // Web Socket 已连接上，使用 send() 方法发送数据
+            //ws.send({"action": "operate", "data": "u"});
+        };
+
+        ws.onmessage = function (evt) {
+            alert(evt.data)
+        };
+
+        ws.onclose = function () {
+
+        };
+        function doll() {
+            ws.send(JSON.stringify({"action": "operate", "data": "doll"}));
+        }
+        function direction(dir) {
+            ws.send(JSON.stringify({"action": "operate", "data": dir}));
         }
     </script>
 
@@ -112,6 +140,16 @@
     <a href="javascript:WebSocketTest()">运行 WebSocket</a>
     <a href="javascript:send()">发送</a>
     <a href="javascript:close()">关闭</a>
+
+    <a href="javascript:assign()">assign</a>
+
+
+
+    <div><a href="javascript:direction('u')">上</a></div>
+    <div><a href="javascript:direction('d')">下</a></div>
+    <div><a href="javascript:direction('l')">左</a></div>
+    <div><a href="javascript:direction('r')">右</a></div>
+    <div><a href="javascript:doll()">抓他妈的</a></div>
 </div>
 <div id="console"></div>
 </body>

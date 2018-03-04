@@ -30,7 +30,7 @@ public class MessageEvent {
     public String toString() {
         return "MessageEvent{" +
                 "session=" + session +
-                ", message=" + message.getPayload() +
+                ", message=" + message +
                 ", data=" + data +
                 '}';
     }

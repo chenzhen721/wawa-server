@@ -12,13 +12,14 @@ public class StringHelper {
         if (StringUtils.isBlank(query)) {
             return map;
         }
-        String[] params = query.split("=");
-        if (params.length % 2 != 0) {
+        String[] params = query.split("&");
+        for(int i = 0; i < params.length; i++) {//todo
+        /*if (params.length % 2 != 0) {
             return map;
-        }
-        for(int i = 0; i < params.length; i+=2) {
-            String key = params[i];
-            String value = params[i+1];
+        }*/
+            String kv = params[i];
+            String key = kv.split("=")[0];
+            String value = kv.split("=")[1];
             map.put(key, value);
         }
         return map;

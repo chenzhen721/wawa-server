@@ -113,7 +113,7 @@ class PublicController extends BaseController {
         info['url'] = "${API_DOMAIN}public/machine_on".toString()
         info['online_status'] = 'on'
         info['last_modify'] = System.currentTimeMillis()
-        def upadte = $$(info.toMap())
+        def upadte = $$($set: info.toMap())
         machine().update($$(_id: _id), upadte, true, false, writeConcern)
         logger.info("success.")
         return [code: 1, data: info]
@@ -146,7 +146,7 @@ class PublicController extends BaseController {
             return Result.丢失必需参数
         }
         def result = serverService.send(device_id, [action: ActionTypeEnum.STATUS.name(), ts: System.currentTimeMillis()])
-        info['device_status'] = result['code'] == 0 ? 2 : result['data']
+        info['device_status'] = (result == null || result['code'] == 0) ? 2 : result['data']
         [code: 1, data: info]
     }
 
@@ -228,6 +228,8 @@ class PublicController extends BaseController {
         def ws_url = "${info['server_uri']}?device_id=${device_id}&log_id=${_id}".toString()
         record_log().save($$(_id: _id,
                 config: data,
+                FBtime: info['FBtime'],
+                LRtime: info['LRtime'],
                 device_id: device_id,
                 user_id: user_id,
                 record_id: record_id,

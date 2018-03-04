@@ -61,6 +61,7 @@ public class DollSocketServer extends TextWebSocketHandler {
             return;
         }
         String log_id = keypaire.get("log_id");
+        //todo 增加查询参数
         DBObject logInfo = record_log().findOne($$(_id, log_id));
         if (logInfo == null) {
             WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
@@ -139,6 +140,14 @@ public class DollSocketServer extends TextWebSocketHandler {
 
     public DBObject playerinfo(String sessionid) {
         return players.get(sessionid);
+    }
+
+    public void register(Object object) {
+        eventBus.register(object);
+    }
+
+    public void unregister(Object object) {
+        eventBus.unregister(object);
     }
 
 }
