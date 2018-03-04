@@ -10,7 +10,7 @@
 
 
 
-    <mongo:mongo replica-set="${mongo.uri}" id="mongo">
+    <!--<mongo:mongo replica-set="${mongo.uri}" id="mongoop">
         <mongo:options connections-per-host="80"
                        threads-allowed-to-block-for-connection-multiplier="6"
                        connect-timeout="3000"
@@ -22,7 +22,7 @@
                         write-number="1"
                         write-timeout="3000"
                         write-fsync="false"/>
-    </mongo:mongo>
+    </mongo:mongo>-->
 
     <mongo:mongo-client replica-set="${mongo.uri}" id="mongo">
         <mongo:client-options connections-per-host="80"

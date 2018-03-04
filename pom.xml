@@ -332,8 +332,8 @@
         <profile>
             <id>testLocal</id>
             <properties>
-                <redis.host>120.79.52.5</redis.host>
-                <mongo.uri>120.79.52.5:27017</mongo.uri>
+                <redis.host>172.18.78.183</redis.host>
+                <mongo.uri>172.18.78.183:27017</mongo.uri>
                 <mongo.cost.write>ACKNOWLEDGED</mongo.cost.write>
                 <redis.mem.host>${redis.host}</redis.mem.host>
                 <redis.mem.port>6379</redis.mem.port>
