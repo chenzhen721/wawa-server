@@ -88,16 +88,10 @@ class PublicController extends BaseController {
         if (info['name'] != name) {
             info['name'] = name
         }
-        if (info['app_id'] == null) {
-            info['app_id'] = APP_ID
-            info['app_token'] = APP_TOKEN
-        }
-        if (info['server_uri'] == null) {
-            info['server_uri'] = SERVER_URI
-        }
-        if (info['stream_uri'] == null) {
-            info['stream_uri'] = STREAM_URI
-        }
+        info['app_id'] = APP_ID
+        info['app_token'] = APP_TOKEN
+        info['server_uri'] = SERVER_URI
+        info['stream_uri'] = STREAM_URI
         def device_comport = ServletRequestUtils.getStringParameter(req, 'comport')
         if (info['comport'] != device_comport) {
             info['comport'] = device_comport

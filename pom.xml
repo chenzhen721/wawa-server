@@ -45,7 +45,7 @@
         <gif.domain>http://record.lezhuale.com/</gif.domain>
         <im.domain>http://aiim.17laihou.com:6070</im.domain>
         <server.domain>ws://ws.doll520.com/machine</server.domain>
-        <stream.domain>ws://ws.doll520.com/machine</stream.domain>
+        <stream.domain>ws://ws.doll520.com/stream</stream.domain>
         <!--<wsvideo.domain>http://v.17laihou.com</wsvideo.domain>-->
 
         <redis.timeout>15000</redis.timeout>
@@ -348,7 +348,7 @@
                 <pic.domain>http://test-aiimg.sumeme.com/</pic.domain>
                 <im.domain>http://test-aiim.memeyule.com:6070</im.domain>
                 <server.domain>ws://test-ws.doll520.com/machine</server.domain>
-                <stream.domain>ws://test-ws.doll520.com/machine</stream.domain>
+                <stream.domain>ws://test-ws.doll520.com/doll</stream.domain>
                 <!--<wsvideo.domain>http://39.106.130.135:7600</wsvideo.domain>-->
                 <gif.domain>http://record.lezhuale.com/</gif.domain>
                 <m.domain>http://test.lezhuale.com/</m.domain>
@@ -403,7 +403,7 @@
                 <user.domain>http://test-user.lezhuale.com/</user.domain>
                 <im.domain>http://test-aiim.lezhuale.com:6070</im.domain>
                 <server.domain>ws://test-ws.doll520.com/machine</server.domain>
-                <stream.domain>ws://test-ws.doll520.com/machine</stream.domain>
+                <stream.domain>ws://test-ws.doll520.com/doll</stream.domain>
                 <!--<wsvideo.domain>http://test-v.17laihou.com:7600</wsvideo.domain>-->
                 <m.domain>http://test.lezhuale.com/</m.domain>
             </properties>
