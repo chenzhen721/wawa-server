@@ -131,6 +131,14 @@
         function direction(dir) {
             ws.send(JSON.stringify({"action": "operate", "data": dir}));
         }
+        var url = "ws://localhost:9001/pull?device_id=ww-f48e387fb884&stream=1"
+        var pull_ws = new WebSocket(url)
+        pull_ws.onopen = function (evt) {
+
+        };
+        pull_ws.onmessage = function (evt) {
+            console.log("pull:" + evt.data)
+        }
     </script>
 
 </head>

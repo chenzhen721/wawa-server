@@ -6,6 +6,7 @@ import com.google.common.eventbus.Subscribe;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.wawa.common.doc.Result;
+import com.wawa.common.util.JSONUtil;
 import com.wawa.common.util.StringHelper;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import org.springframework.web.socket.PongMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
 import javax.annotation.Resource;
@@ -31,7 +33,7 @@ import java.util.Map;
 import static com.wawa.common.doc.MongoKey._id;
 import static com.wawa.common.util.WebUtils.$$;
 
-public class VideoSocketServer extends BinaryWebSocketHandler {
+public class VideoSocketServer extends AbstractWebSocketHandler {
     private static Logger logger = LoggerFactory.getLogger(VideoSocketServer.class);
     private static EventBus allEventBus = new EventBus();
     //记录所有连进来的用户的基础信息
@@ -49,7 +51,6 @@ public class VideoSocketServer extends BinaryWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        super.afterConnectionEstablished(session);
         logger.info("建立连接，开始初始化!" + session);
         try {
             URI uri = session.getUri();
@@ -76,22 +77,29 @@ public class VideoSocketServer extends BinaryWebSocketHandler {
                 audience = new Audience(deviceId, stream, session);
                 players.putIfAbsent(session.getId(), audience);
             }
-            audience.setOwner(true);
             allEventBus.register(audience);
 
+            String deviceKey = deviceId + "stream" + stream;
             if (path.endsWith("push")) {
+                audience.setOwner(true);
                 //todo 创建流房间
-                streams.putIfAbsent(deviceId + stream, new DeviceStream(stream, deviceId));
+                streams.putIfAbsent(deviceKey, new DeviceStream(stream, deviceId));
                 //自己不需要注册订阅事件
             }
             if (path.endsWith("pull")) {
                 //todo 根据device_id进入房间
-                DeviceStream deviceStream = streams.get(deviceId + stream);
+                DeviceStream deviceStream = streams.get(deviceKey);
                 if (deviceStream == null) {
                     session.close();
                     return;
                 }
                 deviceStream.register(audience);
+                Map<String, Object> map = new HashMap<>();
+                map.put("action", "init");
+                map.put("width", 640);
+                map.put("height", 480);
+                TextMessage binaryMessage = new TextMessage(JSONUtil.beanToJson(map));
+                session.sendMessage(binaryMessage);
             }
 
 
@@ -112,8 +120,9 @@ public class VideoSocketServer extends BinaryWebSocketHandler {
         if (audience == null) {
             return;
         }
+        //logger.info("=============>收到信息");
         if (audience.isOwner()) {
-            String deviceKey = audience.getDeviceId() + audience.getStream();
+            String deviceKey = audience.getDeviceId() + "stream" + audience.getStream();
             DeviceStream deviceStream = streams.get(deviceKey);
             if (deviceStream == null) {
                 logger.error("是个主播但是没有流信息"); //todo 需要补充
@@ -121,6 +130,31 @@ public class VideoSocketServer extends BinaryWebSocketHandler {
             }
             RoomEvent roomEvent = new RoomEvent(message.getPayload(), "stream"); //todo type定义需要改
             deviceStream.post(roomEvent);
+        } else {
+            if (message.getPayloadLength() > 0) {
+                String msg = new String(message.getPayload().array());
+                if ("REQUESTSTREAM".equals(msg)) {
+                    audience.setStart(true);
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+        //拉流服务器得到流给订阅此流的用户
+        Audience audience = players.get(session.getId());
+        if (audience == null) {
+            return;
+        }
+        //logger.info("=============>收到信息");
+        if (!audience.isOwner()) {
+            if (message.getPayloadLength() > 0) {
+                String msg = message.getPayload();
+                if ("REQUESTSTREAM".equals(msg)) {
+                    audience.setStart(true);
+                }
+            }
         }
     }
 
@@ -143,7 +177,7 @@ public class VideoSocketServer extends BinaryWebSocketHandler {
                 return;
             }
             allEventBus.unregister(audience);
-            String deviceKey = audience.getDeviceId() + audience.getStream();
+            String deviceKey = audience.getDeviceId() + "stream" + audience.getStream();
             DeviceStream deviceStream = streams.get(deviceKey);
             if (deviceStream != null) {
                 deviceStream.unregister(audience);
@@ -193,6 +227,7 @@ public class VideoSocketServer extends BinaryWebSocketHandler {
         private String stream; //当前关注的视频流
         private WebSocketSession webSocketSession; //对应的session
         private boolean isOwner;//是否主播
+        private boolean start;
 
 
         public Audience(String deviceId, String stream, WebSocketSession webSocketSession) {
@@ -208,12 +243,12 @@ public class VideoSocketServer extends BinaryWebSocketHandler {
         @Subscribe
         public void handle(RoomEvent event) {
             try {
-                if ("stream".equals(event.getType())) {
+                if ("stream".equals(event.getType()) && start) {
                     BinaryMessage binaryMessage = new BinaryMessage(event.getBinary());
                     webSocketSession.sendMessage(binaryMessage);
                 }
             } catch (IOException e) {
-                logger.error("failed to sead stream message to:" + webSocketSession);
+                logger.info("failed to sead stream message to:" + webSocketSession + ": Exception: " + e);
             }
         }
 
@@ -247,6 +282,14 @@ public class VideoSocketServer extends BinaryWebSocketHandler {
 
         public void setOwner(boolean owner) {
             isOwner = owner;
+        }
+
+        public boolean isStart() {
+            return start;
+        }
+
+        public void setStart(boolean start) {
+            this.start = start;
         }
     }
 
