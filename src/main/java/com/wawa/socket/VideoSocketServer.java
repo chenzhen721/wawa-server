@@ -1,11 +1,8 @@
 package com.wawa.socket;
 
-import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
-import com.mongodb.DBCollection;
-import com.mongodb.DBObject;
 import com.wawa.common.doc.Result;
 import com.wawa.common.util.JSONUtil;
 import com.wawa.common.util.StringHelper;
@@ -19,25 +16,16 @@ import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.PongMessage;
 import org.springframework.web.socket.TextMessage;
-import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
-import org.springframework.web.socket.handler.BinaryWebSocketHandler;
 
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.TimerTask;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.wawa.common.doc.MongoKey._id;
-import static com.wawa.common.util.WebUtils.$$;
 
 public class VideoSocketServer extends AbstractWebSocketHandler {
     private static Logger logger = LoggerFactory.getLogger(VideoSocketServer.class);
@@ -199,7 +187,7 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
      * 单个视频流对象
      */
     public class DeviceStream {
-        private EventBus roomEventBus = new AsyncEventBus(Executors.newCachedThreadPool());
+        private EventBus roomEventBus = new EventBus();
         private String stream;  //流名称
         private String deviceId;  //设备ID
         private WebSocketSession owner;
