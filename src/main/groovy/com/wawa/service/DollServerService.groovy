@@ -69,7 +69,7 @@ class DollServerService {
             String data = String.valueOf(msg.get("data"))
             if ("operate".equals(action)) {
                 Map<String, Object> req = new HashMap<>()
-                req.put("action", ActionTypeEnum.OPERATE)
+                req.put("action", ActionTypeEnum.操控指令.getId())
                 Map<String, Object> op = new HashMap<>()
                 req.put("data", op)
                 if ("u".equals(data)) {

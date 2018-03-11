@@ -139,7 +139,7 @@ class PublicController extends BaseController {
         if (info == null) {
             return Result.丢失必需参数
         }
-        def result = serverService.send(device_id, [action: ActionTypeEnum.STATUS.name(), ts: System.currentTimeMillis()])
+        def result = serverService.send(device_id, [action: ActionTypeEnum.机器状态.getId(), ts: System.currentTimeMillis()])
         info['device_status'] = (result == null || result['code'] == 0) ? 2 : result['data']
         [code: 1, data: info]
     }
@@ -198,7 +198,7 @@ class PublicController extends BaseController {
             return Result.ID重复
         }
         //如果机器状态成功则记录当前结果
-        Map result = serverService.send(device_id, [action: ActionTypeEnum.STATUS.name(), ts: System.currentTimeMillis()])
+        Map result = serverService.send(device_id, [action: ActionTypeEnum.机器状态.getId(), ts: System.currentTimeMillis()])
         if (result == null || result.get('code') != 1) {
             return Result.机器非空闲
         }
@@ -214,7 +214,7 @@ class PublicController extends BaseController {
                     heavyToLight: heavyToLight,
                     playtime: info['playtime'],
                     exitDirection: info['exitDirection']]
-        Map resp = serverService.send(device_id, [action: ActionTypeEnum.ASSIGN.name(), data: data, ts: System.currentTimeMillis()])
+        Map resp = serverService.send(device_id, [action: ActionTypeEnum.上机投币.getId(), data: data, ts: System.currentTimeMillis()])
         if (0 == resp['code']) {
             return Result.error
         }

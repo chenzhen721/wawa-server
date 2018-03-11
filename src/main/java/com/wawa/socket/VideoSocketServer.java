@@ -1,5 +1,6 @@
 package com.wawa.socket;
 
+import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -8,6 +9,8 @@ import com.mongodb.DBObject;
 import com.wawa.common.doc.Result;
 import com.wawa.common.util.JSONUtil;
 import com.wawa.common.util.StringHelper;
+import com.wawa.model.ActionTypeEnum;
+import com.wawa.model.RoomEventEnum;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +32,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.wawa.common.doc.MongoKey._id;
 import static com.wawa.common.util.WebUtils.$$;
@@ -40,14 +46,11 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
     private static Map<String, Audience> players = new HashMap<>();
     //sessionid: deviceRoom
     private static Map<String, DeviceStream> streams = new HashMap<>();
-    //todo 这里需要有个数据结构存储对应的推拉流方
-    //key为机器号+流名称  value对应session
-    /*Map<String, WebSocketSession> streamMaps = new HashMap<>();*/
     @Resource
     private MongoTemplate adminMongo;
-    DBCollection machine() {
+    /*DBCollection machine() {
         return adminMongo.getCollection("machine");
-    }
+    }*/
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -82,35 +85,41 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
             String deviceKey = deviceId + "stream" + stream;
             if (path.endsWith("push")) {
                 audience.setOwner(true);
-                //todo 创建流房间
-                streams.putIfAbsent(deviceKey, new DeviceStream(stream, deviceId));
-                //自己不需要注册订阅事件
+                //创建流房间
+                DeviceStream deviceStream = streams.get(deviceKey);
+                if (deviceStream == null) {
+                    deviceStream = new DeviceStream(stream, deviceId, session);
+                    streams.put(deviceKey, deviceStream);
+                }
+                deviceStream.owner = session;
+                deviceStream.start.compareAndSet(false, true);
             }
             if (path.endsWith("pull")) {
-                //todo 根据device_id进入房间
+                String isStart = keypaire.get("start");
+                if ("true".equals(isStart)) {
+                    audience.setStart(true);
+                } else {
+                    audience.setStart(false);
+                }
+                //根据device_id进入房间
                 DeviceStream deviceStream = streams.get(deviceKey);
+                //没有这个房间，直接退出socket
                 if (deviceStream == null) {
                     session.close();
                     return;
                 }
-                deviceStream.register(audience);
-                Map<String, Object> map = new HashMap<>();
-                map.put("action", "init");
-                map.put("width", 640);
-                map.put("height", 480);
-                TextMessage binaryMessage = new TextMessage(JSONUtil.beanToJson(map));
-                session.sendMessage(binaryMessage);
+                //
+                Boolean isRegiser = deviceStream.register(audience);
+                if (!isRegiser) {
+                    session.close();
+                    return;
+                }
+                deviceStream.play();
             }
-
-
 
         } catch (Exception e) {
 
         }
-        //todo 开启推流
-
-        //todo 定期检查socket连接是否可用
-
     }
 
     @Override
@@ -125,18 +134,16 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
             String deviceKey = audience.getDeviceId() + "stream" + audience.getStream();
             DeviceStream deviceStream = streams.get(deviceKey);
             if (deviceStream == null) {
-                logger.error("是个主播但是没有流信息"); //todo 需要补充
+                logger.error("收到机器的推流信息，但是没有房间信息，需要房间重连");
+                //给机器端发送消息重新启动
+                Map<String, Object> msg = new HashMap<>();
+                msg.put("action", ActionTypeEnum.重启指令.getId());
+                msg.put("data", true);
+                WebSocketHelper.send(session, JSONUtil.beanToJson(msg));
                 return;
             }
-            RoomEvent roomEvent = new RoomEvent(message.getPayload(), "stream"); //todo type定义需要改
+            RoomEvent roomEvent = new RoomEvent(message.getPayload(), RoomEventEnum.STREAM); //推流
             deviceStream.post(roomEvent);
-        } else {
-            if (message.getPayloadLength() > 0) {
-                String msg = new String(message.getPayload().array());
-                if ("REQUESTSTREAM".equals(msg)) {
-                    audience.setStart(true);
-                }
-            }
         }
     }
 
@@ -147,24 +154,24 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
         if (audience == null) {
             return;
         }
-        //logger.info("=============>收到信息");
         if (!audience.isOwner()) {
             if (message.getPayloadLength() > 0) {
                 String msg = message.getPayload();
-                if ("REQUESTSTREAM".equals(msg)) {
-                    audience.setStart(true);
-                }
+                //todo 支持切换流
+
             }
         }
     }
 
     @Override
     protected void handlePongMessage(WebSocketSession session, PongMessage message) throws Exception {
+        logger.debug("session: " + session + " ,message" + message);
     }
 
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
-        logger.error("sth error.");
+        //目前想不出场景，需要做处理
+        logger.error("session:" + session + " error:" + exception);
     }
 
     @Override
@@ -180,7 +187,8 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
             String deviceKey = audience.getDeviceId() + "stream" + audience.getStream();
             DeviceStream deviceStream = streams.get(deviceKey);
             if (deviceStream != null) {
-                deviceStream.unregister(audience);
+                //踢出房间
+                deviceStream.kickoff(session);
             }
         } catch (Exception e) {
             logger.error("" + e);
@@ -191,20 +199,25 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
      * 单个视频流对象
      */
     public class DeviceStream {
-        private EventBus roomEventBus = new EventBus();
-        //private List<String> players = new ArrayList<>();
-        private String stream;
-        private String deviceId;
+        private EventBus roomEventBus = new AsyncEventBus(Executors.newCachedThreadPool());
+        private String stream;  //流名称
+        private String deviceId;  //设备ID
         private WebSocketSession owner;
+        private Map<WebSocketSession, Audience> allAudience = new HashMap<>();
+        private AtomicBoolean start = new AtomicBoolean(true);
 
-        public  DeviceStream(String stream, String deviceId) {
+        public  DeviceStream(String stream, String deviceId, WebSocketSession owner) {
             this.stream = stream;
             this.deviceId = deviceId;
             this.owner = owner;
+            this.roomEventBus.register(this);
         }
 
-        public void register(Audience audience) {
+        //判断是否开始推流
+        public boolean register(Audience audience) {
             roomEventBus.register(audience);
+            allAudience.put(audience.getWebSocketSession(), audience);
+            return true;
         }
 
         public void unregister(Audience audience) {
@@ -217,7 +230,57 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
 
         @Subscribe
         public void DeadMessage(DeadEvent deadEvent) {
-            logger.info("received dead event" + deadEvent);
+            if (deadEvent.getEvent()!= null) {
+                if (deadEvent.getEvent() instanceof RoomEvent) {
+                    RoomEvent event = (RoomEvent) deadEvent.getEvent();
+                    if (event.getType() == RoomEventEnum.STREAM) {
+                        off();
+                    }
+                }
+            }
+        }
+
+        //踢出房间
+        public void kickoff(WebSocketSession session) {
+            if (session.equals(owner)) {
+                //交给统一的心跳完成???直播掉线
+                return;
+            }
+            Audience audience = allAudience.remove(session);
+            if (audience != null) {
+                unregister(audience);
+            }
+        }
+
+        //发送流信息
+        public boolean play() {
+            if (owner == null) {//todo isOpen总是返回false
+                return false;
+            }
+            if (this.start.compareAndSet(false, true)) {
+                Map<String, Object> msg = new HashMap<>();
+                msg.put("action", ActionTypeEnum.推流指令.getId());
+                msg.put("data", true);
+                WebSocketHelper.send(owner, JSONUtil.beanToJson(msg));
+                return true;
+            }
+            return false;
+        }
+
+        //关闭流信息
+        public Boolean off() {
+            if (owner == null) { //todo isOpen总是返回false
+                return false;
+            }
+            if (this.start.compareAndSet(true, false)) {
+                logger.info("no audience registered, off stream.");
+                Map<String, Object> msg = new HashMap<>();
+                msg.put("action", ActionTypeEnum.推流指令.getId());
+                msg.put("data", false);
+                WebSocketHelper.send(owner, JSONUtil.beanToJson(msg));
+                return true;
+            }
+            return false;
         }
 
     }
@@ -227,7 +290,7 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
         private String stream; //当前关注的视频流
         private WebSocketSession webSocketSession; //对应的session
         private boolean isOwner;//是否主播
-        private boolean start;
+        private boolean start; //是否开始推流
 
 
         public Audience(String deviceId, String stream, WebSocketSession webSocketSession) {
@@ -243,12 +306,12 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
         @Subscribe
         public void handle(RoomEvent event) {
             try {
-                if ("stream".equals(event.getType()) && start) {
+                if (webSocketSession.isOpen() && RoomEventEnum.STREAM == event.getType() && start) {
                     BinaryMessage binaryMessage = new BinaryMessage(event.getBinary());
                     webSocketSession.sendMessage(binaryMessage);
                 }
             } catch (IOException e) {
-                logger.info("failed to sead stream message to:" + webSocketSession + ": Exception: " + e);
+                logger.info("failed to send stream message to:" + webSocketSession + ": Exception: " + e);
             }
         }
 
@@ -293,16 +356,19 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
         }
     }
 
+    /**
+     * 房间内消息通信
+     */
     public class RoomEvent {
         private ByteBuffer binary;
-        private String type; //todo
+        private RoomEventEnum type;
 
-        public RoomEvent(ByteBuffer binary, String type) {
+        RoomEvent(ByteBuffer binary, RoomEventEnum type) {
             this.binary = binary;
             this.type = type;
         }
 
-        public ByteBuffer getBinary() {
+        ByteBuffer getBinary() {
             return binary;
         }
 
@@ -310,11 +376,11 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
             this.binary = binary;
         }
 
-        public String getType() {
+        public RoomEventEnum getType() {
             return type;
         }
 
-        public void setType(String type) {
+        public void setType(RoomEventEnum type) {
             this.type = type;
         }
     }
