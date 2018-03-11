@@ -22,7 +22,6 @@ import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -130,7 +129,7 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
                 WebSocketHelper.send(session, JSONUtil.beanToJson(msg));
                 return;
             }
-            RoomEvent roomEvent = new RoomEvent(message.getPayload(), RoomEventEnum.STREAM); //推流
+            RoomEvent roomEvent = new RoomEvent(message.getPayload().array(), message.getPayloadLength(), RoomEventEnum.STREAM); //推流
             deviceStream.post(roomEvent);
         }
     }
@@ -279,6 +278,7 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
         private WebSocketSession webSocketSession; //对应的session
         private boolean isOwner;//是否主播
         private boolean start; //是否开始推流
+        private int period = 0;
 
 
         public Audience(String deviceId, String stream, WebSocketSession webSocketSession) {
@@ -296,7 +296,14 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
             try {
                 if (webSocketSession.isOpen() && RoomEventEnum.STREAM == event.getType() && start) {
                     BinaryMessage binaryMessage = new BinaryMessage(event.getBinary());
-                    webSocketSession.sendMessage(binaryMessage);
+                    boolean isSPS = event.getBinary()[4] == (byte)(0x67 & 0xff);
+                    if (!isSPS || period > 90) {
+                        period++;
+                        webSocketSession.sendMessage(binaryMessage);
+                    }
+                    if (isSPS && period > 90) {
+                        period = 0;
+                    }
                 }
             } catch (IOException e) {
                 logger.info("failed to send stream message to:" + webSocketSession + ": Exception: " + e);
@@ -348,19 +355,21 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
      * 房间内消息通信
      */
     public class RoomEvent {
-        private ByteBuffer binary;
+        private byte[] binary;
         private RoomEventEnum type;
+        private int length;
 
-        RoomEvent(ByteBuffer binary, RoomEventEnum type) {
+        RoomEvent(byte[] binary, int len, RoomEventEnum type) {
             this.binary = binary;
+            this.length = len;
             this.type = type;
         }
 
-        ByteBuffer getBinary() {
+        byte[] getBinary() {
             return binary;
         }
 
-        public void setBinary(ByteBuffer binary) {
+        public void setBinary(byte[] binary) {
             this.binary = binary;
         }
 
@@ -370,6 +379,14 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
 
         public void setType(RoomEventEnum type) {
             this.type = type;
+        }
+
+        public int getLength() {
+            return length;
+        }
+
+        public void setLength(int length) {
+            this.length = length;
         }
     }
 
