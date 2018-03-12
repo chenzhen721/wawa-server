@@ -8,6 +8,7 @@ import com.wawa.common.util.JSONUtil;
 import com.wawa.common.util.StringHelper;
 import com.wawa.model.ActionTypeEnum;
 import com.wawa.model.RoomEventEnum;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,7 +130,27 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
                 WebSocketHelper.send(session, JSONUtil.beanToJson(msg));
                 return;
             }
-            RoomEvent roomEvent = new RoomEvent(message.getPayload().array(), message.getPayloadLength(), RoomEventEnum.STREAM); //推流
+
+            byte[] bytes = message.getPayload().array();
+            if (bytes.length < 5) {
+                return;
+            }
+            int type = bytes[4]&0xff;
+            if ( type == 0x67) {
+                deviceStream.setSPSPPS(bytes);
+                return;
+            } else {
+                // 关键帧延迟发送解析
+                byte[] spspps = deviceStream.getSPSPPS();
+                if (spspps != null) {
+                    byte[] iframeData = new byte[spspps.length + bytes.length];
+                    System.arraycopy(spspps, 0, iframeData, 0, spspps.length);
+                    System.arraycopy(bytes, 0, iframeData, spspps.length, bytes.length);
+                    bytes = iframeData;
+                    deviceStream.setSPSPPS(null);
+                }
+            }
+            RoomEvent roomEvent = new RoomEvent(bytes, message.getPayloadLength(), RoomEventEnum.STREAM); //推流
             deviceStream.post(roomEvent);
         }
     }
@@ -192,6 +213,7 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
         private WebSocketSession owner;
         private Map<WebSocketSession, Audience> allAudience = new HashMap<>();
         private AtomicBoolean start = new AtomicBoolean(true);
+        private byte[] SPSPPS;
 
         public  DeviceStream(String stream, String deviceId, WebSocketSession owner) {
             this.stream = stream;
@@ -270,6 +292,13 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
             return false;
         }
 
+        public byte[] getSPSPPS() {
+            return SPSPPS;
+        }
+
+        public void setSPSPPS(byte[] SPSPPS) {
+            this.SPSPPS = SPSPPS;
+        }
     }
 
     public class Audience {
@@ -279,6 +308,7 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
         private boolean isOwner;//是否主播
         private boolean start; //是否开始推流
         private int period = 0;
+        private boolean needsps = true;
 
 
         public Audience(String deviceId, String stream, WebSocketSession webSocketSession) {
@@ -295,15 +325,22 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
         public void handle(RoomEvent event) {
             try {
                 if (webSocketSession.isOpen() && RoomEventEnum.STREAM == event.getType() && start) {
-                    BinaryMessage binaryMessage = new BinaryMessage(event.getBinary());
+                    byte[] payload = event.getBinary();
                     boolean isSPS = event.getBinary()[4] == (byte)(0x67 & 0xff);
-                    if (!isSPS || period > 90) {
-                        period++;
+                    if (isSPS) {
+                        if (needsps) {
+                            needsps = false;
+                            byte[] sps = ArrayUtils.subarray(payload, 0, 27);
+                            BinaryMessage binaryMessage = new BinaryMessage(sps);
+                            webSocketSession.sendMessage(binaryMessage);
+                        }
+                        byte[] pps = ArrayUtils.subarray(payload, 27, payload.length);
+                        BinaryMessage binaryMessage = new BinaryMessage(pps);
                         webSocketSession.sendMessage(binaryMessage);
+                        return;
                     }
-                    if (isSPS && period > 90) {
-                        period = 0;
-                    }
+                    BinaryMessage binaryMessage = new BinaryMessage(payload);
+                    webSocketSession.sendMessage(binaryMessage);
                 }
             } catch (IOException e) {
                 logger.info("failed to send stream message to:" + webSocketSession + ": Exception: " + e);

@@ -644,6 +644,20 @@
             <!--<version>9.2.23.v20171218</version>-->
             <version>${jetty9-version}</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.eclipse.jetty.websocket</groupId>
+                    <artifactId>websocket-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty.websocket</groupId>
+            <artifactId>websocket-api</artifactId>
+            <version>${jetty9-version}</version>
+            <classifier>unlimit</classifier>
+            <systemPath>C:/Users/Administrator/Desktop/server_src/websocket-api-9.4.8.v20171121.unlimit.jar</systemPath>
+            <scope>system</scope>
         </dependency>
         <dependency>
             <groupId>javax.servlet.jsp</groupId>
