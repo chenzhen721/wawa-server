@@ -47,6 +47,10 @@ class MachineServerService {
         if (socket == null) {
             return [code: 0]
         }
+        if (!socket.isOpen()) {
+            machineServer.remote(device_id)
+            return [code: 0]
+        }
         def _id = "${device_id}_${System.nanoTime()}".toString()
         try {
             message.put("id", _id)

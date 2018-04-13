@@ -113,6 +113,8 @@ class PublicController extends BaseController {
         return [code: 1, data: info]
     }
 
+    private BasicDBObject fields = $$(name: 1, online_status: 1, server_uri: 1, stream_uri: 1, device_status: 1)
+
     //todo 接口都需要加密验证
     /**
      * 1 获取机器列表信息
@@ -121,8 +123,12 @@ class PublicController extends BaseController {
      */
     def list(HttpServletRequest req) {
         def app_id = req.getParameter('app_id')
-        Crud.list(req, machine(), $$(app_id: app_id), MongoKey.ALL_FIELD, $$(order: -1)) {
+        Crud.list(req, machine(), $$(app_id: app_id, online_status: "on"), fields, $$(order: -1)) {List<DBObject> list->
             //顺便每台机器的status, 视频流地址等信息
+            for(DBObject obj : list) {
+                obj.put('stream_uri', (obj.get('stream_uri') as String) + '?device_id=' + (obj.get('_id') as String))
+                //todo 这个地方判断下是否对应的机器都处于连接状态
+            }
         }
     }
 
@@ -132,10 +138,11 @@ class PublicController extends BaseController {
      */
     def info(HttpServletRequest req) {
         def device_id = req.getParameter('device_id')
-        if (StringUtils.isBlank(device_id)) {
+        def app_id = req.getParameter('app_id')
+        if (StringUtils.isBlank(device_id) || StringUtils.isBlank(app_id)) {
             return Result.丢失必需参数
         }
-        def info = machine().findOne($$(_id: device_id))
+        def info = machine().findOne($$(_id: device_id, app_id: app_id), fields)
         if (info == null) {
             return Result.丢失必需参数
         }
@@ -231,7 +238,7 @@ class PublicController extends BaseController {
                 ws_url: ws_url,
                 status: 0, //0 开始 1 结束
                 timestamp: System.currentTimeMillis()))
-        return [code: 1, data: [status: status, ws_url: ws_url, log_id: _id]]
+        return [code: 1, data: [device_id: device_id, status: status, ws_url: ws_url, log_id: _id]]
     }
 
 }

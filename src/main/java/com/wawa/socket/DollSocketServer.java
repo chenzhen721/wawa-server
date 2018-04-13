@@ -24,6 +24,9 @@ import java.util.Map;
 import static com.wawa.common.doc.MongoKey._id;
 import static com.wawa.common.util.WebUtils.$$;
 
+/**
+ * 用于操作机器指令
+ */
 public class DollSocketServer extends TextWebSocketHandler {
     private static Logger logger = LoggerFactory.getLogger(DollSocketServer.class);
     private static Map<String, DBObject> players = new HashMap<>();

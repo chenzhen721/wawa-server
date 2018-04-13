@@ -49,6 +49,11 @@ public class MachineSocketServer extends TextWebSocketHandler {
         return devices.get(device_id);
     }
 
+    public DBObject remote(String device_id) {
+        WebSocketSession session = devices.remove(device_id);
+        return machines.remove(session.getId());
+    }
+
     /**
      * onopen
      * @param session

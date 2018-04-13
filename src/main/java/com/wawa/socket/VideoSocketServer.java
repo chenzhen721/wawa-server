@@ -61,7 +61,7 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
                 return;
             }
             String deviceId = keypaire.get("device_id");
-            String stream = keypaire.get("stream");
+            String stream = "1";
             Audience audience = players.get(session.getId());
             if (audience == null) {
                 audience = new Audience(deviceId, stream, session);
@@ -73,21 +73,12 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
             if (path.endsWith("push")) {
                 audience.setOwner(true);
                 //创建流房间
-                DeviceStream deviceStream = streams.get(deviceKey);
-                if (deviceStream == null) {
-                    deviceStream = new DeviceStream(stream, deviceId, session);
-                    streams.put(deviceKey, deviceStream);
-                }
+                DeviceStream deviceStream = streams.putIfAbsent(deviceKey, new DeviceStream(stream, deviceId, session));
                 deviceStream.owner = session;
                 deviceStream.start.compareAndSet(false, true);
             }
             if (path.endsWith("pull")) {
-                String isStart = keypaire.get("start");
-                if ("true".equals(isStart)) {
-                    audience.setStart(true);
-                } else {
-                    audience.setStart(false);
-                }
+                audience.setStart(true);
                 //根据device_id进入房间
                 DeviceStream deviceStream = streams.get(deviceKey);
                 //没有这个房间，直接退出socket
@@ -95,7 +86,6 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
                     session.close();
                     return;
                 }
-                //
                 Boolean isRegiser = deviceStream.register(audience);
                 if (!isRegiser) {
                     session.close();
@@ -143,9 +133,11 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
         }
         if (!audience.isOwner()) {
             if (message.getPayloadLength() > 0) {
+                String deviceKey = audience.getDeviceId() + "stream" + audience.getStream();
+                DeviceStream deviceStream = streams.get(deviceKey);
                 String msg = message.getPayload();
-                //todo 支持切换流
-
+                MessageEvent roomEvent = new MessageEvent(msg, RoomEventEnum.STREAM); //推流
+                deviceStream.post(roomEvent);
             }
         }
     }
@@ -211,7 +203,7 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
             roomEventBus.unregister(audience);
         }
 
-        public void post(RoomEvent roomEvent) {
+        public void post(Object roomEvent) {
             roomEventBus.post(roomEvent);
         }
 
@@ -310,6 +302,24 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
             }
         }
 
+        /**
+         * 房间推送的消息在这里接收
+         * @param event
+         */
+        @Subscribe
+        public void handle(MessageEvent event) {
+            try {
+                if (webSocketSession.isOpen() && RoomEventEnum.TOGGLE == event.getType()) {
+                    //todo 支持切换流 这个操作可以异步完成
+                    //第一步删除原来订阅的流的信息
+                    //第二步添加订阅至目标流的信息
+
+                }
+            } catch (Exception e) {
+                logger.info("failed to send stream message to:" + webSocketSession + ": Exception: " + e);
+            }
+        }
+
         public String getDeviceId() {
             return deviceId;
         }
@@ -388,6 +398,28 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
         public void setLength(int length) {
             this.length = length;
         }
+    }
+
+    /**
+     * 房间内消息通信
+     */
+    public class MessageEvent {
+        private String msg;
+        private RoomEventEnum type;
+
+        MessageEvent(String msg, RoomEventEnum type) {
+            this.msg = msg;
+            this.type = type;
+        }
+
+        public String getMsg() {
+            return msg;
+        }
+
+        public RoomEventEnum getType() {
+            return type;
+        }
+
     }
 
     public static void main(String[] args) {
