@@ -230,8 +230,9 @@ class PublicController extends BaseController {
                 app_id: app_id,
                 ws_url: ws_url,
                 status: 0, //0 开始 1 结束
+                playtime: info['playtime'],
                 timestamp: System.currentTimeMillis()))
-        return [code: 1, data: [status: status, ws_url: ws_url, log_id: _id]]
+        return [code: 1, data: [status: status, playtime: info['playtime'], ws_url: ws_url, log_id: _id]]
     }
 
 }

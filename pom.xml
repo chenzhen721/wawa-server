@@ -332,7 +332,7 @@
         <profile>
             <id>testLocal</id>
             <properties>
-                <redis.host>172.18.78.183</redis.host>
+                <redis.host>127.0.0.1</redis.host>
                 <mongo.uri>127.0.0.1:27017</mongo.uri>
                 <mongo.cost.write>ACKNOWLEDGED</mongo.cost.write>
                 <redis.mem.host>${redis.host}</redis.mem.host>
@@ -344,14 +344,15 @@
                 <redis.user.host>${redis.host}</redis.user.host>
                 <redis.user.port>6379</redis.user.port>
                 <api.domain>http://localhost:9001/</api.domain>
-                <user.domain>http://test-user.lezhuale.com/</user.domain>
+                <main.domain>http://test-api.doll520.com/</main.domain>
+                <user.domain>http://test-user.doll520.com/</user.domain>
                 <pic.domain>http://test-aiimg.sumeme.com/</pic.domain>
                 <im.domain>http://test-aiim.memeyule.com:6070</im.domain>
                 <server.domain>ws://localhost:9001/machine</server.domain>
                 <stream.domain>ws://localhost:9001/push</stream.domain>
                 <!--<wsvideo.domain>http://39.106.130.135:7600</wsvideo.domain>-->
-                <gif.domain>http://record.lezhuale.com/</gif.domain>
-                <m.domain>http://test.lezhuale.com/</m.domain>
+                <gif.domain>http://test-record.doll520.com/</gif.domain>
+                <m.domain>http://test.doll520.com/</m.domain>
                 <pic.folder>/Users/Administrator/Downloads/</pic.folder>
                 <!--<log.error.target>stdout</log.error.target>-->
             </properties>
@@ -400,7 +401,8 @@
                 <h5.domain>http://test.lezhuale.com/</h5.domain>
                 <api.domain>http://test-server.doll520.com/</api.domain>
                 <site.domain>http://test.lezhuale.com/</site.domain>
-                <user.domain>http://test-user.lezhuale.com/</user.domain>
+                <main.domain>http://test-api.doll520.com/</main.domain>
+                <user.domain>http://test-user.doll520.com/</user.domain>
                 <im.domain>http://test-aiim.lezhuale.com:6070</im.domain>
                 <server.domain>ws://test-ws.doll520.com/machine</server.domain>
                 <stream.domain>ws://test-ws.doll520.com/push</stream.domain>

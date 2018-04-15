@@ -19,9 +19,14 @@
     <context:property-placeholder  location="classpath*:*.properties" ignore-unresolvable="true" />
     <util:properties id="application" location="classpath:application.properties" />
 
+    <!--娃娃机指令交互-->
     <bean id="machine" class="com.wawa.socket.MachineSocketServer"/>
+    <!--客户端指令交互-->
     <bean id="doll" class="com.wawa.socket.DollSocketServer"/>
+    <!--娃娃机and客户端推拉视频流-->
     <bean id="video" class="com.wawa.socket.VideoSocketServer"/>
+    <!--客户服务端信息流-->
+    <bean id="message" class="com.wawa.socket.MessageSocketServer"/>
     <bean id="handshakeHandler" class="org.springframework.web.socket.server.support.DefaultHandshakeHandler"/>
 
     <websocket:handlers allowed-origins="*">
@@ -50,6 +55,13 @@
         <websocket:handshake-handler ref="handshakeHandler"/>
         <websocket:handshake-interceptors>
             <bean class="com.wawa.socket.VideoHandshakeInterceptor"/>
+        </websocket:handshake-interceptors>
+    </websocket:handlers>
+    <websocket:handlers allowed-origins="*">
+        <websocket:mapping path="/im" handler="message"/>
+        <websocket:handshake-handler ref="handshakeHandler"/>
+        <websocket:handshake-interceptors>
+            <bean class="com.wawa.socket.MessageHandshakeInterceptor"/>
         </websocket:handshake-interceptors>
     </websocket:handlers>
 
