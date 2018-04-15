@@ -40,7 +40,6 @@
         <api.domain>http://api.lezhuale.com/</api.domain>
         <user.domain>http://user.lezhuale.com/</user.domain>
         <site.domain>http://www.lezhuale.com/</site.domain>
-        <h5.domain>http://www.lezhuale.com/</h5.domain>
         <m.domain>http://www.lezhuale.com/</m.domain>
         <gif.domain>http://record.lezhuale.com/</gif.domain>
         <im.domain>http://aiim.17laihou.com:6070</im.domain>
@@ -350,6 +349,7 @@
                 <im.domain>http://test-aiim.memeyule.com:6070</im.domain>
                 <server.domain>ws://localhost:9001/machine</server.domain>
                 <stream.domain>ws://localhost:9001/push</stream.domain>
+                <doll.domain>ws://localhost:9001/doll</doll.domain>
                 <!--<wsvideo.domain>http://39.106.130.135:7600</wsvideo.domain>-->
                 <gif.domain>http://test-record.doll520.com/</gif.domain>
                 <m.domain>http://test.doll520.com/</m.domain>
@@ -398,16 +398,16 @@
                 <aspectj-scope>provided</aspectj-scope>
 
                 <pic.domain>http://test-aiimg.sumeme.com/</pic.domain>
-                <h5.domain>http://test.lezhuale.com/</h5.domain>
                 <api.domain>http://test-server.doll520.com/</api.domain>
-                <site.domain>http://test.lezhuale.com/</site.domain>
+                <site.domain>http://test.doll520.com/</site.domain>
                 <main.domain>http://test-api.doll520.com/</main.domain>
                 <user.domain>http://test-user.doll520.com/</user.domain>
                 <im.domain>http://test-aiim.lezhuale.com:6070</im.domain>
                 <server.domain>ws://test-ws.doll520.com/machine</server.domain>
                 <stream.domain>ws://test-ws.doll520.com/push</stream.domain>
+                <doll.domain>ws://test-ws.doll520.com/doll</doll.domain>
                 <!--<wsvideo.domain>http://test-v.17laihou.com:7600</wsvideo.domain>-->
-                <m.domain>http://test.lezhuale.com/</m.domain>
+                <m.domain>http://test.doll520.com/</m.domain>
             </properties>
         </profile>
 

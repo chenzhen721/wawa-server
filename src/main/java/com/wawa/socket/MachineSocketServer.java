@@ -87,14 +87,7 @@ public class MachineSocketServer extends TextWebSocketHandler {
         } catch (Exception e) {
             logger.error("connection failed." + session);
         }
-        /*Map<String, Object> msg = new HashMap<>();
-        msg.put("id", "123");
-        msg.put("action", "STATUS");
-        WebSocketHelper.send(session, JSONUtil.beanToJson(msg));
-        Task task = new Task();
-        this.register((String) msg.get("id"), task);
-        Map result = task.get();
-        logger.info(JSONUtil.beanToJson(result));*/
+
     }
 
     /**

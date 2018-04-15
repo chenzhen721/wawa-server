@@ -1,18 +1,14 @@
 package com.wawa.socket;
 
-import com.mongodb.DBObject;
-import com.mongodb.WriteConcern;
 import com.wawa.common.util.JSONUtil;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +21,12 @@ public class MessageSocketServer extends TextWebSocketHandler {
     private static ExecutorService executor = Executors.newCachedThreadPool();
     private static Map<String, Map<String, Object>> users = new HashMap<>();
     private static Map<String, List<String>> rooms = new HashMap<>();
+
+    public void sendToRoom(String roomId) {
+        if (rooms.containsKey(roomId)) {
+            rooms.get(roomId);
+        }
+    }
 
     /**
      * onopen

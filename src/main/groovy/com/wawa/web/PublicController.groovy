@@ -35,6 +35,7 @@ class PublicController extends BaseController {
     public static final String APP_TOKEN = "9c1b7a6868fd2229d1b62e719665bb0b" //给机器用
     public static final String SERVER_URI = AppProperties.get('server.domain')
     public static final String STREAM_URI = AppProperties.get('stream.domain')
+    public static final String DOLL_URI = AppProperties.get('doll.domain')
     public static final String API_DOMAIN = AppProperties.get("api.domain")
 
     @Resource
@@ -205,14 +206,15 @@ class PublicController extends BaseController {
             return Result.ID重复
         }
         //如果机器状态成功则记录当前结果
-        Map result = serverService.send(device_id, [action: ActionTypeEnum.机器状态.getId(), ts: System.currentTimeMillis()])
-        if (result == null || result.get('code') != 1) {
-            return Result.机器非空闲
-        }
-        def status = result.get('data') as Integer
-        if (status != 0) {
-            return Result.机器非空闲
-        }
+        //Map result = serverService.send(device_id, [action: ActionTypeEnum.机器状态.getId(), ts: System.currentTimeMillis()])
+        //if (result == null || result.get('code') != 1) {
+        //    return Result.机器非空闲
+        //}
+        //def status = result.get('data') as Integer
+        //if (status != 0) {
+        //    return Result.机器非空闲
+        //}
+        def _id = device_id + '_' + System.currentTimeMillis()
         def data = [FBspeed: info['FBspeed'],
                     LRspeed: info['LRspeed'],
                     UDspeed: info['UDspeed'],
@@ -221,12 +223,11 @@ class PublicController extends BaseController {
                     heavyToLight: heavyToLight,
                     playtime: info['playtime'],
                     exitDirection: info['exitDirection']]
-        Map resp = serverService.send(device_id, [action: ActionTypeEnum.上机投币.getId(), data: data, ts: System.currentTimeMillis()])
+        Map resp = serverService.send(device_id, [action: ActionTypeEnum.上机投币.getId(), data: data, _id: _id, ts: System.currentTimeMillis()])
         if (0 == resp['code']) {
             return Result.error
         }
-        def _id = device_id + '_' + System.currentTimeMillis()
-        def ws_url = "${info['server_uri']}?device_id=${device_id}&log_id=${_id}".toString()
+        def ws_url = "${DOLL_URI}?device_id=${device_id}&log_id=${_id}".toString()
         record_log().save($$(_id: _id,
                 config: data,
                 FBtime: info['FBtime'],
@@ -239,7 +240,7 @@ class PublicController extends BaseController {
                 status: 0, //0 开始 1 结束
                 playtime: info['playtime'],
                 timestamp: System.currentTimeMillis()))
-        return [code: 1, data: [device_id: device_id, status: status, playtime: info['playtime'], ws_url: ws_url, log_id: _id]]
+        return [code: 1, data: [device_id: device_id, status: 1, playtime: info['playtime'], ws_url: ws_url, log_id: _id]]
     }
 
 }
