@@ -2,6 +2,8 @@ package com.wawa.service
 
 import com.wawa.api.event.Task
 import com.wawa.common.util.JSONUtil
+import com.wawa.model.ActionResult
+import com.wawa.model.Response
 import com.wawa.socket.WebSocketHelper
 import com.wawa.socket.MachineSocketServer
 import groovy.transform.CompileStatic
@@ -42,14 +44,15 @@ class MachineServerService {
      * @param message
      * @return
      */
-    Map send(String device_id, Map message) {
+    Response<ActionResult> send(String device_id, Map message) {
         WebSocketSession socket = machineServer.getByDeviceId(device_id)
-        if (socket == null) {
-            return [code: 0]
-        }
-        if (!socket.isOpen()) {
-            machineServer.remote(device_id)
-            return [code: 0]
+        Response resp = new Response()
+        resp.setCode(0)
+        if (socket == null || !socket.isOpen()) {
+            if (!socket.isOpen()) {
+                machineServer.remote(device_id)
+            }
+            return resp
         }
         def _id = "${device_id}_${System.nanoTime()}".toString()
         try {
@@ -58,14 +61,14 @@ class MachineServerService {
             WebSocketHelper.send(machineServer.getByDeviceId(device_id), msg)
             Task task = new Task()
             machineServer.register(_id, task)
-            Map result = task.get()
+            Response<ActionResult> result = task.get()
             return result
         } catch (Exception e) {
             logger.error('machine socket server error.' + e)
         } finally {
             machineServer.unregister(_id)
         }
-        return [code: 0]
+        return resp
     }
 
 }

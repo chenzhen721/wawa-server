@@ -1,5 +1,6 @@
 package com.wawa.socket;
 
+import com.mongodb.util.JSON;
 import com.wawa.common.util.JSONUtil;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -87,22 +88,23 @@ public class MessageSocketServer extends TextWebSocketHandler {
                 String userId = String.valueOf(user.get("_id"));
                 String room_id = (String) user.get("current_room_id");
                 List<String> userList = rooms.get(room_id);
+                Map<String, Object> testMsg = new HashMap<>();
+                Map<String, Object> data = new HashMap<>();
+                Map<String, Object> userInfo = new HashMap<>();
+                testMsg.put("_id", userId + System.currentTimeMillis());
+                testMsg.put("action", action);
+                testMsg.put("data", data);
+                data.put("from", userInfo);
+                data.put("content", ((Map) obj.get("data")).get("content"));
+                userInfo.put("nick_name", user.get("nick_name"));
+                String resp = JSONUtil.beanToJson(testMsg);
 //                if (userList != null && userList.remove(userId)) {
-                logger.info("userList size." + userList.size());
                 if (userList != null) {
+                    logger.info("userList size." + userList.size());
                     for (String id: userList) {
                         Map<String, Object> u = users.get(id);
                         WebSocketSession webSocketSession = (WebSocketSession) u.get("socket_session");
-                        Map<String, Object> testMsg = new HashMap<>();
-                        Map<String, Object> data = new HashMap<>();
-                        Map<String, Object> userInfo = new HashMap<>();
-                        testMsg.put("_id", userId + System.currentTimeMillis());
-                        testMsg.put("action", action);
-                        testMsg.put("data", data);
-                        data.put("from", userInfo);
-                        data.put("content", ((Map) obj.get("data")).get("content"));
-                        userInfo.put("nick_name", user.get("nick_name"));
-                        WebSocketHelper.send(webSocketSession, JSONUtil.beanToJson(testMsg));
+                        WebSocketHelper.send(webSocketSession, resp);
                     }
                 }
             }

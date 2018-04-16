@@ -1,5 +1,7 @@
 package com.wawa.api.event;
 
+import com.wawa.model.ActionResult;
+import com.wawa.model.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,24 +14,24 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Administrator on 2018/2/27.
  */
-public class Task implements Callable<Map> {
+public class Task implements Callable<Response<ActionResult>> {
     private static Logger logger = LoggerFactory.getLogger(Task.class);
-    private FutureTask<Map> futureTask = new FutureTask<>(this);
-    private Map result;
+    private FutureTask<Response<ActionResult>> futureTask = new FutureTask<>(this);
+    private Response<ActionResult> result;
 
     @Override
-    public Map call() throws Exception {
+    public Response<ActionResult> call() throws Exception {
         while(result == null) {
             Thread.sleep(100);
         }
         return result;
     }
 
-    public void setResult(Map result) {
+    public void setResult(Response<ActionResult> result) {
         this.result = result;
     }
 
-    public Map get() {
+    public Response<ActionResult> get() {
         try {
             return futureTask.get(10000, TimeUnit.MILLISECONDS);
         } catch (Exception e) {

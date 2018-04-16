@@ -7,6 +7,8 @@ import com.wawa.api.event.Task;
 import com.wawa.common.doc.Result;
 import com.wawa.common.util.JSONUtil;
 import com.wawa.common.util.StringHelper;
+import com.wawa.model.ActionResult;
+import com.wawa.model.Response;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,7 +106,7 @@ public class MachineSocketServer extends TextWebSocketHandler {
             if (StringUtils.isBlank(message.getPayload())) {
                 return;
             }
-            Map msg = JSONUtil.jsonToMap(message.getPayload());
+            Response<ActionResult> msg = JSONUtil.jsonToMap(message.getPayload());
 
             String _id = (String) msg.get("id");
             if (_id != null) {
@@ -114,6 +116,12 @@ public class MachineSocketServer extends TextWebSocketHandler {
                     task.execute(executor);
                 }
             }
+
+            //todo 游戏结果callback log_id record_id
+
+
+
+
             //WebSocketHelper.send(session, "received msg.");
         } catch (Exception e) {
             logger.error("illigal session:" + session + ", message:" + message.getPayload());
