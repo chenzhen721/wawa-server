@@ -1,5 +1,7 @@
 package com.wawa.socket;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
@@ -8,6 +10,7 @@ import com.wawa.common.doc.Result;
 import com.wawa.common.util.JSONUtil;
 import com.wawa.common.util.StringHelper;
 import com.wawa.model.ActionResult;
+import com.wawa.model.ActionTypeEnum;
 import com.wawa.model.Response;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
@@ -42,6 +45,7 @@ public class MachineSocketServer extends TextWebSocketHandler {
     private static Map<String, DBObject> machines = new HashMap<>();
     private static Map<String, WebSocketSession> devices = new HashMap<>();
     private final Map<String, Task> messageListener = new ConcurrentHashMap<>();
+    public static final TypeFactory typeFactory = TypeFactory.defaultInstance();
 
     DBCollection machine() {
         return adminMongo.getCollection("machine");
@@ -106,9 +110,10 @@ public class MachineSocketServer extends TextWebSocketHandler {
             if (StringUtils.isBlank(message.getPayload())) {
                 return;
             }
-            Response<ActionResult> msg = JSONUtil.jsonToMap(message.getPayload());
+            JavaType javaType = typeFactory.constructParametricType(Response.class, ActionResult.class);
+            Response<ActionResult> msg = JSONUtil.jsonToBean(message.getPayload(), javaType);
 
-            String _id = (String) msg.get("id");
+            String _id = msg.getId();
             if (_id != null) {
                 Task task = messageListener.remove(_id);
                 if (task != null) {
@@ -118,7 +123,13 @@ public class MachineSocketServer extends TextWebSocketHandler {
             }
 
             //todo 游戏结果callback log_id record_id
+            if (msg.getCode() == 1) {
+                ActionResult actionResult = msg.getData();
+                if (ActionTypeEnum.操控指令.getId().equals(actionResult.getAction_type())
+                        && StringUtils.isNotBlank(actionResult.getResult())) {
 
+                }
+            }
 
 
 
