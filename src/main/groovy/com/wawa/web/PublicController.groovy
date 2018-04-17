@@ -11,7 +11,9 @@ import com.wawa.base.anno.Rest
 import com.wawa.common.doc.MongoKey
 import com.wawa.common.doc.Result
 import com.wawa.common.util.JSONUtil
+import com.wawa.model.ActionResult
 import com.wawa.model.ActionTypeEnum
+import com.wawa.model.Response
 import com.wawa.service.MachineServerService
 import org.apache.commons.lang.StringUtils
 import org.slf4j.Logger
@@ -114,7 +116,7 @@ class PublicController extends BaseController {
         return [code: 1, data: info]
     }
 
-    private BasicDBObject fields = $$(name: 1, online_status: 1, server_uri: 1, stream_uri: 1, device_status: 1)
+    private BasicDBObject fields = $$(name: 1, online_status: 1, server_uri: 1, device_status: 1)
 
     //todo 接口都需要加密验证
     /**
@@ -147,8 +149,11 @@ class PublicController extends BaseController {
         if (info == null) {
             return Result.丢失必需参数
         }
-        def result = serverService.send(device_id, [action: ActionTypeEnum.机器状态.getId(), ts: System.currentTimeMillis()])
-        info['device_status'] = (result == null || result['code'] == 0) ? 2 : result['data']
+        Response<ActionResult> result = serverService.send(device_id, [action: ActionTypeEnum.机器状态.getId(), ts: System.currentTimeMillis()])
+        info['device_status'] = (result == null || result.getCode() == 0 || result.getData() == null) ? 2 : result.getData().getResult()
+        //"ws://test-server.doll520.com/pull?device_id=ww-00e04c3609e8&stream=1&start=true";
+//todo        info['stream_uri'] = "${STREAM_URI}pull?device_id=${info['_id']}".toString()
+        info['stream_uri'] = "ws://test-ws.doll520.com/pull?device_id=${info['_id']}".toString()
         [code: 1, data: info]
     }
 
@@ -223,8 +228,8 @@ class PublicController extends BaseController {
                     heavyToLight: heavyToLight,
                     playtime: info['playtime'],
                     exitDirection: info['exitDirection']]
-        Map resp = serverService.send(device_id, [action: ActionTypeEnum.上机投币.getId(), data: data, _id: _id, ts: System.currentTimeMillis()])
-        if (0 == resp['code']) {
+        Response<ActionResult> resp = serverService.send(device_id, [action: ActionTypeEnum.上机投币.getId(), data: data, _id: _id, ts: System.currentTimeMillis()])
+        if (0 == resp.getCode() || resp.getData() == null) {
             return Result.error
         }
         def ws_url = "${DOLL_URI}?device_id=${device_id}&log_id=${_id}".toString()
@@ -238,6 +243,7 @@ class PublicController extends BaseController {
                 app_id: app_id,
                 ws_url: ws_url,
                 status: 0, //0 开始 1 结束
+                updated: false,
                 playtime: info['playtime'],
                 timestamp: System.currentTimeMillis()))
         return [code: 1, data: [device_id: device_id, status: 1, playtime: info['playtime'], ws_url: ws_url, log_id: _id]]

@@ -1,5 +1,7 @@
 package com.wawa.socket;
 
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 import com.wawa.common.util.HttpClientUtils;
 import com.wawa.common.util.JSONUtil;
 import com.wawa.common.util.StringHelper;
@@ -14,6 +16,8 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 
 import java.net.URI;
 import java.util.Map;
+
+import static com.wawa.common.util.WebUtils.$$;
 
 public class MessageHandshakeInterceptor extends HttpSessionHandshakeInterceptor {
     public static final Logger logger = LoggerFactory.getLogger(MessageHandshakeInterceptor.class);
@@ -55,7 +59,7 @@ public class MessageHandshakeInterceptor extends HttpSessionHandshakeInterceptor
                 logger.info("response error. to get user info");
                 return false;
             }
-            Map user = (Map) result.get("data");
+            DBObject user = $$((Map) result.get("data"));
             user.put("current_room_id", keypaire.get("room_id"));
             attributes.put("user", user);
 

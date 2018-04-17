@@ -2,11 +2,13 @@ package com.wawa.socket;
 
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
 import com.wawa.api.event.Task;
 import com.wawa.common.doc.Result;
+import com.wawa.common.util.HttpClientUtils;
 import com.wawa.common.util.JSONUtil;
 import com.wawa.common.util.StringHelper;
 import com.wawa.model.ActionResult;
@@ -23,6 +25,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.wawa.common.doc.MongoKey.$set;
 import static com.wawa.common.doc.MongoKey._id;
 import static com.wawa.common.util.WebUtils.$$;
 
@@ -39,6 +43,8 @@ public class MachineSocketServer extends TextWebSocketHandler {
     private static Logger logger = LoggerFactory.getLogger(MachineSocketServer.class);
     @Resource
     private MongoTemplate adminMongo;
+    @Resource
+    private MongoTemplate logMongo;
     @Resource
     private WriteConcern writeConcern;
     private static ExecutorService executor = Executors.newCachedThreadPool();
@@ -49,6 +55,9 @@ public class MachineSocketServer extends TextWebSocketHandler {
 
     DBCollection machine() {
         return adminMongo.getCollection("machine");
+    }
+    DBCollection record_log() {
+        return logMongo.getCollection("record_log");
     }
 
     public WebSocketSession getByDeviceId(String device_id) {
@@ -93,7 +102,6 @@ public class MachineSocketServer extends TextWebSocketHandler {
         } catch (Exception e) {
             logger.error("connection failed." + session);
         }
-
     }
 
     /**
@@ -122,20 +130,51 @@ public class MachineSocketServer extends TextWebSocketHandler {
                 }
             }
 
-            //todo 游戏结果callback log_id record_id
+            //游戏结果callback log_id record_id
             if (msg.getCode() == 1) {
                 ActionResult actionResult = msg.getData();
                 if (ActionTypeEnum.操控指令.getId().equals(actionResult.getAction_type())
                         && StringUtils.isNotBlank(actionResult.getResult())) {
-
+                    //游戏结果回调
+                    String logId = actionResult.getLog_id();
+                    //收到游戏结果 更新record_log
+                    BasicDBObject query = $$("_id", logId).append("status", 0);
+                    BasicDBObject update = $$("status", 1);
+                    DBObject deviceInfo = machines.get(session.getId());
+                    if (deviceInfo != null) {
+                        String callback_url = "" + deviceInfo.get("callback_url");
+                        DBObject record = record_log().findOne(logId);
+                        if (StringUtils.isBlank(callback_url) || record == null) {
+                            logger.error("callback_url or record missing." + logId);
+                        } else {
+                            Map<String, String> params = new HashMap<>();
+                            params.put("log_id", actionResult.getLog_id());
+                            params.put("record_id", "" + record.get("record_id"));
+                            params.put("operate_result", actionResult.getResult());
+                            params.put("sign", "");
+                            params.put("ts", "");
+                            try {
+                                String resp = HttpClientUtils.post(callback_url, params, null);
+                                if (resp != null) {
+                                    Response response = JSONUtil.jsonToBean(resp, Response.class);
+                                    if (response != null && response.getCode() == 1) {
+                                        update.append("updated", true);
+                                    }
+                                }
+                            } catch (IOException e) {
+                                logger.error("error to get callback_url:" + callback_url + " ,with params" + JSONUtil.beanToJson(params));
+                            }
+                        }
+                    }
+                    update.append("operate_result", Boolean.parseBoolean(actionResult.getResult()));
+                    if (1 != record_log().update(query, $$($set, update), false, false, writeConcern).getN()) {
+                        logger.error("failed to update record_log: " + logId + " ,update:" + update);
+                    }
                 }
             }
 
-
-
-            //WebSocketHelper.send(session, "received msg.");
         } catch (Exception e) {
-            logger.error("illigal session:" + session + ", message:" + message.getPayload());
+            logger.error("illigal session:" + session + ", message:" + message.getPayload(), e);
         }
     }
 

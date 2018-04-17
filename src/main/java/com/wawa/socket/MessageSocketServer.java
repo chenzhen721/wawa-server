@@ -1,32 +1,75 @@
 package com.wawa.socket;
 
-import com.mongodb.util.JSON;
+import com.mongodb.DBObject;
 import com.wawa.common.util.JSONUtil;
+import com.wawa.model.Connection;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.PingMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MessageSocketServer extends TextWebSocketHandler {
     private static Logger logger = LoggerFactory.getLogger(MessageSocketServer.class);
     private static ExecutorService executor = Executors.newCachedThreadPool();
-    private static Map<String, Map<String, Object>> users = new HashMap<>();
+    private static Map<String, Connection<DBObject>> users = new ConcurrentHashMap<>();
     private static Map<String, List<String>> rooms = new HashMap<>();
+    private Timer timer = new Timer();
+    private TimerTask pingTimerTask;
 
-    public void sendToRoom(String roomId) {
-        if (rooms.containsKey(roomId)) {
-            rooms.get(roomId);
+    public void sendToUser(String userId, String content) {
+        Connection<DBObject> conn = users.get(userId);
+        if (conn != null && conn.getSession() != null) {
+            WebSocketSession session = conn.getSession();
+            if (session != null && session.isOpen()) {
+                WebSocketHelper.send(session, content);
+            }
         }
+    }
+
+    public void sendToRoom(String roomId, String content) {
+        if (rooms.containsKey(roomId)) {
+            List<String> list = rooms.get(roomId);
+            for(String userId : list) {
+                Connection<DBObject> conn = users.get(userId);
+                if (conn != null && conn.getSession() != null) {
+                    WebSocketSession session = conn.getSession();
+                    if (session != null && session.isOpen()) {
+                        WebSocketHelper.send(session, content);
+                    }
+                }
+            }
+        }
+    }
+
+    public void sendToGlobal(final String content) {
+        executor.execute(() -> {
+            for (Connection<DBObject> sessions : users.values()) {
+                WebSocketSession session = sessions.getSession();
+                if (session != null && session.isOpen()) {
+                    WebSocketHelper.send(session, content);
+                }
+            }
+        });
+    }
+
+    @PostConstruct
+    public void init() {
+        heartBeat();
     }
 
     /**
@@ -41,17 +84,21 @@ public class MessageSocketServer extends TextWebSocketHandler {
         try {
             Map<String, Object> attr = session.getAttributes();
             logger.info("attr:" + JSONUtil.beanToJson(attr));
-            Map<String, Object> user = (Map<String, Object>) attr.get("user");
-            user.put("socket_session", session);
+            DBObject user = (DBObject) attr.get("user");
+            if (user == null) {
+                session.close();
+                return;
+            }
             String userId = String.valueOf(user.get("_id"));
-            users.put(userId, user);
-            List<String> list = rooms.get((String) user.get("current_room_id"));
+            String current_room_id = "" + user.get("current_room_id");
+            List<String> list = rooms.get(current_room_id);
             if (list == null) {
                 list = new ArrayList<>();
                 rooms.put((String) user.get("current_room_id"), list);
             }
             list.add(userId);
-
+            Connection<DBObject> connection = new Connection<>(userId, session, user);
+            users.put(userId, connection);
         } catch (Exception e) {
             logger.error("connection failed." + session + ", Exception:" + e);
             session.close();
@@ -102,8 +149,8 @@ public class MessageSocketServer extends TextWebSocketHandler {
                 if (userList != null) {
                     logger.info("userList size." + userList.size());
                     for (String id: userList) {
-                        Map<String, Object> u = users.get(id);
-                        WebSocketSession webSocketSession = (WebSocketSession) u.get("socket_session");
+                        Connection<DBObject> conn = users.get(id);
+                        WebSocketSession webSocketSession = conn.getSession();
                         WebSocketHelper.send(webSocketSession, resp);
                     }
                 }
@@ -124,10 +171,10 @@ public class MessageSocketServer extends TextWebSocketHandler {
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         logger.info(session + " has left the room! status:" + status);
         //去掉对应的conn
-        //todo 去掉对应的session
+        //去掉对应的session
         Map<String, Object> attr = session.getAttributes();
         if (!attr.isEmpty()) {
-            Map<String, Object> user = (Map<String, Object>) attr.get("user");
+            Map<String, Object> user = (Map<String, Object>) attr.remove("user");
             if (user != null && !user.isEmpty()) {
                 String userId = String.valueOf(user.get("_id"));
                 users.remove(userId);
@@ -146,18 +193,50 @@ public class MessageSocketServer extends TextWebSocketHandler {
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) throws Exception {
         logger.error("sth wrong happened on server." + exception);
-        /*if (session == null) {
-            return;
-        }
-        //todo 去掉对应的session
-        Map<String, Object> attr = session.getAttributes();
-        Map<String, Object> user = (Map<String, Object>) attr.get("user");
-        String userId = (String) user.get("_id");
-        users.remove(userId);
-        List<String> list = rooms.get("" + user.get("current_room_id"));
-        list.remove(userId);*/
     }
 
-    //todo 做心跳 没有连接的用户踢出房间
+    //做心跳 没有连接的用户踢出房间
+    public static final PingMessage pingMessage = new PingMessage();
+    private void heartBeat() {
+        //心跳
+        if (pingTimerTask == null) {
+            pingTimerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    for(Map.Entry<String, Connection<DBObject>> entry : users.entrySet()) {
+                        String key = entry.getKey();
+                        Connection<DBObject> value = entry.getValue();
+                        try {
+                            if (value != null && value.getSession() != null && value.getSession().isOpen()) {
+                                logger.debug("ping socket " + value.getSession().getPrincipal() + " send ping.");
+                                value.getSession().sendMessage(pingMessage);
+                                continue;
+                            }
+                        } catch (Exception e) {
+                            logger.error("error to ping." + e);
+                        }
+                        users.remove(key);
+                        if (value != null) {
+                            if (value.getData() != null) {
+                                String current_room_id = "" + value.getData().get("current_room_id");
+                                if (rooms.containsKey(current_room_id)) {
+                                    List<String> list = rooms.get(current_room_id);
+                                    list.remove(current_room_id);
+                                }
+                            }
+                            try {
+                                if (value.getSession() != null) {
+                                    value.getSession().close(CloseStatus.GOING_AWAY);
+                                }
+                            } catch (Exception e) {
+                                logger.error("error to close session.");
+                            }
+                        }
+                    }
+                }
+            };
+            timer.scheduleAtFixedRate(pingTimerTask, 60000, 60000);
+        }
+    }
 
 }

@@ -5,21 +5,27 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.wawa.common.doc.Result;
 import com.wawa.common.util.StringHelper;
+import com.wawa.model.Connection;
 import com.wawa.model.MessageEvent;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.web.socket.CloseStatus;
+import org.springframework.web.socket.PingMessage;
 import org.springframework.web.socket.PongMessage;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static com.wawa.common.doc.MongoKey._id;
 import static com.wawa.common.util.WebUtils.$$;
@@ -29,13 +35,23 @@ import static com.wawa.common.util.WebUtils.$$;
  */
 public class DollSocketServer extends TextWebSocketHandler {
     private static Logger logger = LoggerFactory.getLogger(DollSocketServer.class);
-    private static Map<String, DBObject> players = new HashMap<>();
+    private static Map<String, Connection<DBObject>> players = new HashMap<>();
     private EventBus eventBus = new EventBus();
+    private Timer timer = new Timer();
+    private TimerTask pingTimerTask;
+
     @Resource
     public MongoTemplate logMongo;
+
     DBCollection record_log() {
         return logMongo.getCollection("record_log");
     }
+
+    @PostConstruct
+    public void init() {
+        heartBeat();
+    }
+
     /**
      * onopen
      * @param session
@@ -64,18 +80,16 @@ public class DollSocketServer extends TextWebSocketHandler {
             return;
         }
         String log_id = keypaire.get("log_id");
-        //todo 增加查询参数
         DBObject logInfo = record_log().findOne($$(_id, log_id));
         if (logInfo == null) {
             WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
             session.close();
             return;
         }
-        //todo 每一步都要记录状态
         //todo 这里需要做排他 同一个record只能同时有一个客户端连接
-        logInfo.put("player", session);
         logInfo.put("status", 0); //初始化
-        players.put(session.getId(), logInfo);
+        Connection<DBObject> connection = new Connection<>(session.getId(), session, logInfo);
+        players.put(session.getId(), connection);
     }
 
     /**
@@ -88,8 +102,12 @@ public class DollSocketServer extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         logger.debug("" + session + ": " + message);
-        DBObject playerinfo = players.get(session.getId());
-        if (playerinfo == null || !playerinfo.containsField("device_id") || !playerinfo.containsField("status")) {
+        Connection<DBObject> conn = players.get(session.getId());
+        if (conn == null || conn.getData() == null) {
+            return;
+        }
+        DBObject playerinfo = conn.getData();
+        if (!playerinfo.containsField("device_id") || !playerinfo.containsField("status")) {
             logger.debug("cannot find playerinfo on session:" + session + ", message:" + message.getPayload());
             return;
         }
@@ -138,11 +156,7 @@ public class DollSocketServer extends TextWebSocketHandler {
     @Override
     protected void handlePongMessage(WebSocketSession session, PongMessage message) throws Exception {
         super.handlePongMessage(session, message);
-        logger.debug(session.getId() + message.getPayloadLength());
-    }
-
-    public DBObject playerinfo(String sessionid) {
-        return players.get(sessionid);
+        logger.info(session.getId() + message.getPayloadLength());
     }
 
     public void register(Object object) {
@@ -151,6 +165,43 @@ public class DollSocketServer extends TextWebSocketHandler {
 
     public void unregister(Object object) {
         eventBus.unregister(object);
+    }
+
+    //做心跳 没有连接的用户踢出房间
+    public static final PingMessage pingMessage = new PingMessage();
+    private void heartBeat() {
+        //心跳
+        if (pingTimerTask == null) {
+            pingTimerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    for(Map.Entry<String, Connection<DBObject>> entry : players.entrySet()) {
+                        String key = entry.getKey();
+                        Connection<DBObject> value = entry.getValue();
+                        try {
+                            if (value != null && value.getSession() != null && value.getSession().isOpen()) {
+                                logger.debug("ping socket " + value.getSession().getPrincipal() + " send ping.");
+                                value.getSession().sendMessage(pingMessage);
+                                continue;
+                            }
+                        } catch (Exception e) {
+                            logger.error("error to ping." + e);
+                        }
+                        players.remove(key);
+                        if (value != null) {
+                            try {
+                                if (value.getSession() != null) {
+                                    value.getSession().close(CloseStatus.GOING_AWAY);
+                                }
+                            } catch (Exception e) {
+                                logger.error("error to close session.");
+                            }
+                        }
+                    }
+                }
+            };
+            timer.scheduleAtFixedRate(pingTimerTask, 60000, 60000);
+        }
     }
 
 }

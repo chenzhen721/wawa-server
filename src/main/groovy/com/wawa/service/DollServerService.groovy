@@ -6,8 +6,10 @@ import com.mongodb.DBCollection
 import com.mongodb.DBObject
 import com.mongodb.WriteConcern
 import com.wawa.common.util.JSONUtil
+import com.wawa.model.ActionResult
 import com.wawa.model.ActionTypeEnum
 import com.wawa.model.MessageEvent
+import com.wawa.model.Response
 import com.wawa.socket.DollSocketServer
 import com.wawa.socket.WebSocketHelper
 import groovy.transform.CompileStatic
@@ -100,21 +102,20 @@ class DollServerService {
                     playerinfo.put("status", 1)
                     op.put("doll", 1)
                     op.put("direction", 8)
-                    Map response = machineServerService.send(deviceId, req)
+                    Response<ActionResult> response = machineServerService.send(deviceId, req)
                     Map<String, Object> result = new HashMap<>()
                     result.put("action", "result")
-                    if (response == null || response.get("code") == null ||
-                            response.get("code") != 1 || response.get("data") == null) {
+                    if (response == null || response.getCode() != 1 || response.getData() == null) {
                         result.put("data", false)
                         WebSocketHelper.send(session, JSONUtil.beanToJson(result))
                     } else {
-                        result.put("data", response.get("data"))
+                        result.put("data", Boolean.parseBoolean(response.getData().getResult()))
                         WebSocketHelper.send(session, JSONUtil.beanToJson(result))
                     }
                     //更新记录
-                    BasicDBObject update = $$("status", 1)
+                    /*BasicDBObject update = $$("status", 1)
                     update.append("result", result.get("data"))
-                    record_log().update($$(_id, String.valueOf(playerinfo.get("_id"))), $$($set: update), false, false, writeConcern)
+                    record_log().update($$(_id, String.valueOf(playerinfo.get("_id"))), $$($set: update), false, false, writeConcern)*/
                     session.close()
                 }
             }
