@@ -152,7 +152,6 @@ class PublicController extends BaseController {
         Response<ActionResult> result = serverService.send(device_id, [action: ActionTypeEnum.机器状态.getId(), ts: System.currentTimeMillis()])
         info['device_status'] = (result == null || result.getCode() == 0 || result.getData() == null) ? 2 : result.getData().getResult()
         //"ws://test-server.doll520.com/pull?device_id=ww-00e04c3609e8&stream=1&start=true";
-//todo        info['stream_uri'] = "${STREAM_URI}pull?device_id=${info['_id']}".toString()
         info['stream_uri'] = "ws://test-ws.doll520.com/pull?device_id=${info['_id']}".toString()
         [code: 1, data: info]
     }

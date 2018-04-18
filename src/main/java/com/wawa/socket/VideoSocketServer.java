@@ -314,7 +314,7 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
                 if (webSocketSession.isOpen() && RoomEventEnum.STREAM == event.getType() && start) {
                     byte[] payload = event.getBinary();
                     boolean isSPS = event.getBinary()[4] == (byte)(0x67 & 0xff);
-                    if (isSPS) {
+                    /*if (isSPS) {
                         if (needsps) {
                             Map<String, String> msg = new HashMap<>();
                             msg.put("type", "restart");
@@ -328,6 +328,12 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
                         BinaryMessage binaryMessage = new BinaryMessage(pps);
                         webSocketSession.sendMessage(binaryMessage);
                         return;
+                    }*/
+                    if (needsps) {
+                        Map<String, String> msg = new HashMap<>();
+                        msg.put("type", "restart");
+                        WebSocketHelper.send(webSocketSession, JSONUtil.beanToJson(msg));
+                        needsps = false;
                     }
                     BinaryMessage binaryMessage = new BinaryMessage(payload);
                     webSocketSession.sendMessage(binaryMessage);
