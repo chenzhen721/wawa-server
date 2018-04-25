@@ -49,8 +49,8 @@ class MachineServerService {
         Response resp = new Response()
         resp.setCode(0)
         if (socket == null || !socket.isOpen()) {
-            if (!socket.isOpen()) {
-                machineServer.remote(device_id)
+            if (socket != null && !socket.isOpen()) {
+                machineServer.remove(device_id)
             }
             return resp
         }
