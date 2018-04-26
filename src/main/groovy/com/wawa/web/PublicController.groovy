@@ -61,7 +61,7 @@ class PublicController extends BaseController {
 
     /**
      * //todo 机器注册
-     * FBspeed: 100, 0-100
+     * fbspeed: 100, 0-100
      * LRspeed: 100, 0-100
      * UDspeed: 100, 0-100
      * lightWeight: 10, 0-100
@@ -83,7 +83,7 @@ class PublicController extends BaseController {
         }
         def info = machine().findOne($$(_id: _id))
         if (info == null) {
-            info = new BasicDBObject(_id: _id, FBspeed: 100, FBtime:100, LRspeed: 100, LRtime:100, UDspeed: 100, lightWeight: 10, heavyWeight: 100, heavyToLight: 100, playtime: 40, exitDirection: 1)
+            info = new BasicDBObject(_id: _id, fbspeed: 100, fbtime:100, lrspeed: 100, lrtime:100, udspeed: 100, lightWeight: 10, heavyWeight: 100, heavyToLight: 100, playtime: 40, exitDirection: 1)
         }
         if (info['timestamp'] == null) {
             info['timestamp'] = System.currentTimeMillis()
@@ -158,9 +158,9 @@ class PublicController extends BaseController {
 
     /**
      * //todo 更新游戏参数
-     * FBspeed: 100, 0-100
-     LRspeed: 100, 0-100
-     UDspeed: 100, 0-100
+     * fbspeed: 100, 0-100
+     lrspeed: 100, 0-100
+     udspeed: 100, 0-100
      lightWeight: 10, 0-100
      heavyWeight: 100, 0-100
      heavyToLight: 100, 0-255
@@ -219,9 +219,9 @@ class PublicController extends BaseController {
         //    return Result.机器非空闲
         //}
         def _id = device_id + '_' + System.currentTimeMillis()
-        def data = [FBspeed: info['FBspeed'],
-                    LRspeed: info['LRspeed'],
-                    UDspeed: info['UDspeed'],
+        def data = [fbspeed: info['fbspeed'],
+                    lrspeed: info['lrspeed'],
+                    udspeed: info['udspeed'],
                     lightWeight: lightWeight,
                     heavyWeight: heavyWeight,
                     heavyToLight: heavyToLight,
@@ -234,8 +234,8 @@ class PublicController extends BaseController {
         def ws_url = "${DOLL_URI}?device_id=${device_id}&log_id=${_id}".toString()
         record_log().save($$(_id: _id,
                 config: data,
-                FBtime: info['FBtime'],
-                LRtime: info['LRtime'],
+                fbtime: info['fbtime'],
+                lrtime: info['lrtime'],
                 device_id: device_id,
                 user_id: user_id,
                 record_id: record_id,
@@ -245,6 +245,7 @@ class PublicController extends BaseController {
                 updated: false,
                 playtime: info['playtime'],
                 timestamp: System.currentTimeMillis()))
+        //todo 上机成功就要开始录像
         return [code: 1, data: [device_id: device_id, status: 1, playtime: info['playtime'], ws_url: ws_url, log_id: _id]]
     }
 

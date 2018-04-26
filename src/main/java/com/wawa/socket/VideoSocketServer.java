@@ -119,7 +119,7 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
             if (bytes.length < 5) {
                 return;
             }
-            int type = bytes[4]&0xff;
+            /*int type = bytes[4]&0xff;
             if ( type == 0x67) {
                 deviceStream.setSPSPPS(bytes);
                 return;
@@ -133,7 +133,7 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
                     bytes = iframeData;
                     deviceStream.setSPSPPS(null);
                 }
-            }
+            }*/
             RoomEvent roomEvent = new RoomEvent(bytes, message.getPayloadLength(), RoomEventEnum.STREAM); //推流
             deviceStream.post(roomEvent);
         }

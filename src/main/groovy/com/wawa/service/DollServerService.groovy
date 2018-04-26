@@ -75,25 +75,25 @@ class DollServerService {
                 Map<String, Object> op = new HashMap<>()
                 req.put("data", op)
                 if ("u".equals(data)) {
-                    op.put("FBtime", playerinfo.get("FBtime"))
+                    op.put("fbtime", playerinfo.get("fbtime"))
                     op.put("direction", 0)
                     machineServerService.sendMessage(deviceId, JSONUtil.beanToJson(req))
                     return
                 }
                 if ("d".equals(data)) {
-                    op.put("FBtime", playerinfo.get("FBtime"))
+                    op.put("fbtime", playerinfo.get("fbtime"))
                     op.put("direction", 1)
                     machineServerService.sendMessage(deviceId, JSONUtil.beanToJson(req))
                     return
                 }
                 if ("l".equals(data)) {
-                    op.put("LRtime", playerinfo.get("LRtime"))
+                    op.put("lrtime", playerinfo.get("lrtime"))
                     op.put("direction", 2)
                     machineServerService.sendMessage(deviceId, JSONUtil.beanToJson(req))
                     return
                 }
                 if ("r".equals(data)) {
-                    op.put("LRtime", playerinfo.get("LRtime"))
+                    op.put("lrtime", playerinfo.get("lrtime"))
                     op.put("direction", 3)
                     machineServerService.sendMessage(deviceId, JSONUtil.beanToJson(req))
                     return
