@@ -62,6 +62,16 @@ class MessageController extends BaseController {
         return Result.success
     }
 
+    //获取进入房间内的人数  可能还要推送进入房间的消息
+    def room_users(HttpServletRequest req) {
+        logger.info("room_users:" + req.getParameterMap())
+        def room_id = ServletRequestUtils.getIntParameter(req, 'room_id')
+        if (room_id == null) {
+            return Result.参数错误
+        }
+        return [code: 1, data: messageSocketServer.roomUsers("" + room_id)]
+    }
+
     private String readJsonString(HttpServletRequest req) {
         try {
             BufferedReader streamReader = new BufferedReader(new InputStreamReader(req.getInputStream(), "UTF-8"));

@@ -15,6 +15,7 @@ import com.wawa.model.ActionResult
 import com.wawa.model.ActionTypeEnum
 import com.wawa.model.Response
 import com.wawa.service.MachineServerService
+import com.wawa.service.VideoServerService
 import org.apache.commons.lang.StringUtils
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -36,12 +37,16 @@ class PublicController extends BaseController {
     public static final String APP_SECRET = "ab75e7a2de882107d3bc89948a1baa9e" //分配给客户
     public static final String APP_TOKEN = "9c1b7a6868fd2229d1b62e719665bb0b" //给机器用
     public static final String SERVER_URI = AppProperties.get('server.domain')
-    public static final String STREAM_URI = AppProperties.get('stream.domain')
+    public static final String PUSH_STREAM_URI = AppProperties.get('push.domain')
+    public static final String PULL_STREAM_URI = AppProperties.get('pull.domain')
     public static final String DOLL_URI = AppProperties.get('doll.domain')
     public static final String API_DOMAIN = AppProperties.get("api.domain")
 
     @Resource
     MachineServerService serverService
+
+    @Resource
+    VideoServerService videoServerService
 
     DBCollection machine() {
         adminMongo.getCollection('machine')
@@ -94,7 +99,7 @@ class PublicController extends BaseController {
         info['app_id'] = APP_ID
         info['app_token'] = APP_TOKEN
         info['server_uri'] = SERVER_URI
-        info['stream_uri'] = STREAM_URI
+        info['push_uri'] = PUSH_STREAM_URI
         def device_comport = ServletRequestUtils.getStringParameter(req, 'comport')
         if (info['comport'] != device_comport) {
             info['comport'] = device_comport
@@ -129,8 +134,7 @@ class PublicController extends BaseController {
         Crud.list(req, machine(), $$(app_id: app_id, online_status: "on"), fields, $$(order: -1)) {List<DBObject> list->
             //顺便每台机器的status, 视频流地址等信息
             for(DBObject obj : list) {
-                obj.put('stream_uri', (obj.get('stream_uri') as String) + '?device_id=' + (obj.get('_id') as String))
-                //todo 这个地方判断下是否对应的机器都处于连接状态
+                //obj.put('stream_uri', (obj.get('stream_uri') as String) + '?device_id=' + (obj.get('_id') as String))
             }
         }
     }
@@ -151,8 +155,7 @@ class PublicController extends BaseController {
         }
         Response<ActionResult> result = serverService.send(device_id, [action: ActionTypeEnum.机器状态.getId(), ts: System.currentTimeMillis()])
         info['device_status'] = (result == null || result.getCode() == 0 || result.getData() == null) ? 2 : result.getData().getResult()
-        //"ws://test-server.doll520.com/pull?device_id=ww-00e04c3609e8&stream=1&start=true";
-        info['stream_uri'] = "ws://test-ws.doll520.com/pull?device_id=${info['_id']}".toString()
+        info['pull_stream'] = "${PULL_STREAM_URI}?device_id=${info['_id']}".toString()
         [code: 1, data: info]
     }
 
@@ -218,7 +221,8 @@ class PublicController extends BaseController {
         //if (status != 0) {
         //    return Result.机器非空闲
         //}
-        def _id = device_id + '_' + System.currentTimeMillis()
+        Long timestamp = System.currentTimeMillis()
+        def _id = device_id + '_' + timestamp
         def data = [fbspeed: info['fbspeed'],
                     lrspeed: info['lrspeed'],
                     udspeed: info['udspeed'],
@@ -244,8 +248,10 @@ class PublicController extends BaseController {
                 status: 0, //0 开始 1 结束
                 updated: false,
                 playtime: info['playtime'],
-                timestamp: System.currentTimeMillis()))
-        //todo 上机成功就要开始录像
+                finish_time: playtime + timestamp,
+                timestamp: timestamp))
+        //上机成功就要开始录像
+        videoServerService.record_start(record_id, device_id)
         return [code: 1, data: [device_id: device_id, status: 1, playtime: info['playtime'], ws_url: ws_url, log_id: _id]]
     }
 

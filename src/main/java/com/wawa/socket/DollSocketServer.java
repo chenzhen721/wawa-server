@@ -1,13 +1,12 @@
 package com.wawa.socket;
 
+import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.wawa.common.doc.Result;
-import com.wawa.common.util.StringHelper;
 import com.wawa.model.Connection;
 import com.wawa.model.MessageEvent;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -20,23 +19,22 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.net.URI;
-import java.util.HashMap;
-import java.util.List;
+import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-
-import static com.wawa.common.doc.MongoKey._id;
-import static com.wawa.common.util.WebUtils.$$;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 
 /**
  * 用于操作机器指令
  */
 public class DollSocketServer extends TextWebSocketHandler {
     private static Logger logger = LoggerFactory.getLogger(DollSocketServer.class);
-    private static Map<String, Connection<DBObject>> players = new HashMap<>();
-    private EventBus eventBus = new EventBus();
+    private static Map<String, Connection<DBObject>> players = new ConcurrentHashMap<>();
+    private EventBus eventBus = new AsyncEventBus("default_doll", Executors.newCachedThreadPool());
     private Timer timer = new Timer();
     private TimerTask pingTimerTask;
 
@@ -59,37 +57,42 @@ public class DollSocketServer extends TextWebSocketHandler {
      */
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        logger.info("建立连接，开始初始化!" + session);
-        URI uri = session.getUri();
-        String descriptor = uri.getQuery();
-        //todo 这些操作都可以放到interceptor中完成
-        if (StringUtils.isBlank(descriptor)) {
-            WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
-            session.close();
+        logger.info("client doll socket建立连接，开始初始化!" + session);
+        try {
+            Map<String, Object> attr = session.getAttributes();
+            if (attr == null || !attr.containsKey("logInfo")) {
+                WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
+                session.close(CloseStatus.BAD_DATA);
+                return;
+            }
+            //同一个record只能同时有一个客户端连接
+            DBObject logInfo = (DBObject) attr.get("logInfo");
+            logInfo.put("status", 0); //初始化
+            Connection<DBObject> connection = new Connection<>(session.getId(), session, logInfo);
+            if (!players.isEmpty()) {
+                Iterator<String> iter = players.keySet().iterator();
+                while (iter.hasNext()) {
+                    String key = iter.next();
+                    Connection<DBObject> conn = players.get(key);
+                    if (conn != null && conn.getData() != null) {
+                        DBObject obj = conn.getData();
+                        if (obj.get("_id") != null && obj.get("_id").equals(logInfo.get("_id"))) {
+                            players.remove(key);
+                            if (conn.getSession() != null && conn.getSession().isOpen()) {
+                                WebSocketHelper.send(conn.getSession(), Result.丢失必需参数.toJsonString());
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            players.put(session.getId(), connection);
             return;
+        } catch (Exception e) {
+            logger.error("error to establish connection." + session, e);
         }
-        Map<String, String> keypaire = StringHelper.parseUri(descriptor);
-        if (keypaire == null) {
-            WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
-            session.close();
-            return;
-        }
-        if (!keypaire.containsKey("log_id")) {
-            WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
-            session.close();
-            return;
-        }
-        String log_id = keypaire.get("log_id");
-        DBObject logInfo = record_log().findOne($$(_id, log_id));
-        if (logInfo == null) {
-            WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
-            session.close();
-            return;
-        }
-        //todo 这里需要做排他 同一个record只能同时有一个客户端连接
-        logInfo.put("status", 0); //初始化
-        Connection<DBObject> connection = new Connection<>(session.getId(), session, logInfo);
-        players.put(session.getId(), connection);
+        WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
+        session.close(CloseStatus.BAD_DATA);
     }
 
     /**
@@ -101,7 +104,7 @@ public class DollSocketServer extends TextWebSocketHandler {
      */
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        logger.debug("" + session + ": " + message);
+        logger.info("" + session + ": " + message);
         Connection<DBObject> conn = players.get(session.getId());
         if (conn == null || conn.getData() == null) {
             return;

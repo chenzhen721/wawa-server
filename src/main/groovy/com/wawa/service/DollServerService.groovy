@@ -49,14 +49,13 @@ class DollServerService {
         return logMongo.getCollection("record_log")
     }
 
-    //todo 向服务端发送游戏通知等信息，注册开始结束监听器等
     @Subscribe
     public void listener(MessageEvent messageEvent) {
         //写入properties文件内
         try {
             DBObject playerinfo = (DBObject) messageEvent.getData()
             TextMessage message = messageEvent.getMessage()
-            WebSocketSession session = (WebSocketSession)playerinfo.get("player")
+            WebSocketSession session = messageEvent.getSession()
             String deviceId = String.valueOf(playerinfo.get("device_id"))
             String status = String.valueOf(playerinfo.get("status"))
             if (!"0".equals(status)) {
@@ -102,6 +101,7 @@ class DollServerService {
                     playerinfo.put("status", 1)
                     op.put("doll", 1)
                     op.put("direction", 8)
+                    req.put("_id", playerinfo.get("_id"))
                     Response<ActionResult> response = machineServerService.send(deviceId, req)
                     Map<String, Object> result = new HashMap<>()
                     result.put("action", "result")
@@ -112,15 +112,11 @@ class DollServerService {
                         result.put("data", Boolean.parseBoolean(response.getData().getResult()))
                         WebSocketHelper.send(session, JSONUtil.beanToJson(result))
                     }
-                    //更新记录
-                    /*BasicDBObject update = $$("status", 1)
-                    update.append("result", result.get("data"))
-                    record_log().update($$(_id, String.valueOf(playerinfo.get("_id"))), $$($set: update), false, false, writeConcern)*/
                     session.close()
                 }
             }
         } catch (Exception e) {
-            logger.error("exception: ${e}".toString())
+            logger.error("exception: ".toString(), e)
         }
     }
 

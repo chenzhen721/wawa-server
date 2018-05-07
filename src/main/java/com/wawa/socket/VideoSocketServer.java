@@ -1,5 +1,6 @@
 package com.wawa.socket;
 
+import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -12,6 +13,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
@@ -21,19 +23,31 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.AbstractWebSocketHandler;
 
 import javax.annotation.Resource;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URI;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class VideoSocketServer extends AbstractWebSocketHandler {
     private static Logger logger = LoggerFactory.getLogger(VideoSocketServer.class);
-    private static EventBus allEventBus = new EventBus();
+    private static EventBus allEventBus = new AsyncEventBus("default_all", Executors.newCachedThreadPool());
     //记录所有连进来的用户的基础信息
     private static Map<String, Audience> players = new HashMap<>();
     //sessionid: deviceRoom
     private static Map<String, DeviceStream> streams = new HashMap<>();
+    private Map<String, Record> recordMap = new HashMap<>();
     @Resource
     private MongoTemplate adminMongo;
     /*DBCollection machine() {
@@ -42,27 +56,18 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        logger.info("建立连接，开始初始化!" + session);
+        logger.info("video stream 建立连接，开始初始化!" + session);
         try {
-            URI uri = session.getUri();
-            String path = uri.getPath();
+            Map<String, Object> attr = session.getAttributes();
+            if (attr == null || !attr.containsKey("deviceId") || !attr.containsKey("stream") || !attr.containsKey("isPush")) {
+                WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
+                session.close(CloseStatus.BAD_DATA);
+                return;
+            }
+            String deviceId = "" + attr.get("deviceId");
+            String stream = "" + attr.get("stream");
+            Boolean isPush = Boolean.parseBoolean("" + attr.get("isPush"));
 
-            String descriptor = uri.getQuery();
-            if (StringUtils.isBlank(descriptor)) {
-                WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
-                return;
-            }
-            Map<String, String> keypaire = StringHelper.parseUri(descriptor);
-            if (keypaire == null) {
-                WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
-                return;
-            }
-            if (!keypaire.containsKey("device_id") || !keypaire.containsKey("stream")) {
-                WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
-                return;
-            }
-            String deviceId = keypaire.get("device_id");
-            String stream = !"1".equals(keypaire.get("stream")) ? "2" : "1";
             Audience audience = players.get(session.getId());
             if (audience == null) {
                 audience = new Audience(deviceId, stream, session);
@@ -77,21 +82,22 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
                 deviceStream = new DeviceStream(stream, deviceId, null);
                 streams.put(deviceKey, deviceStream);
             }
-            if (path.endsWith("push")) {
+            if (isPush) {
                 audience.setOwner(true);
                 deviceStream.owner = session;
                 deviceStream.start.compareAndSet(false, true);
-            }
-            if (path.endsWith("pull")) {
+            } else {
                 audience.setStart(true);
                 //根据device_id进入房间
                 deviceStream.register(audience);
                 deviceStream.play();
             }
-
+            return;
         } catch (Exception e) {
-
+            logger.error("error to establish connection." + session, e);
         }
+        WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
+        session.close(CloseStatus.BAD_DATA);
     }
 
     @Override
@@ -114,27 +120,8 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
                 WebSocketHelper.send(session, JSONUtil.beanToJson(msg));
                 return;
             }
-
-            byte[] bytes = message.getPayload().array();
-            if (bytes.length < 5) {
-                return;
-            }
-            /*int type = bytes[4]&0xff;
-            if ( type == 0x67) {
-                deviceStream.setSPSPPS(bytes);
-                return;
-            } else {
-                // 关键帧延迟发送解析
-                byte[] spspps = deviceStream.getSPSPPS();
-                if (spspps != null) {
-                    byte[] iframeData = new byte[spspps.length + bytes.length];
-                    System.arraycopy(spspps, 0, iframeData, 0, spspps.length);
-                    System.arraycopy(bytes, 0, iframeData, spspps.length, bytes.length);
-                    bytes = iframeData;
-                    deviceStream.setSPSPPS(null);
-                }
-            }*/
-            RoomEvent roomEvent = new RoomEvent(bytes, message.getPayloadLength(), RoomEventEnum.STREAM); //推流
+            //todo 这个地方看看有没有优化空间
+            RoomEvent roomEvent = new RoomEvent(message, null, message.getPayloadLength(), RoomEventEnum.STREAM); //推流
             deviceStream.post(roomEvent);
         }
     }
@@ -190,11 +177,44 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
         }
     }
 
+    public boolean record_open(String logId, String deviceId) {
+        Record record = recordMap.get(logId);
+        if (record != null) {
+            return true;
+        }
+        record = new Record(logId, deviceId);
+        logger.info("init record instance. result:" + record.newInstance());
+        recordMap.put(logId, record);
+        String deviceKey = deviceId + "stream" + record.getStream();
+
+        //创建流房间
+        DeviceStream deviceStream = streams.get(deviceKey);
+        if (deviceStream == null) {
+            deviceStream = new DeviceStream(record.getStream(), deviceId, null);
+            streams.put(deviceKey, deviceStream);
+        }
+        //根据device_id进入房间
+        deviceStream.register(record);
+        deviceStream.play();
+        return true;
+    }
+
+    public boolean record_off(String logId, String deviceId) {
+        logger.info("record map:" + recordMap);
+        Record record = recordMap.remove(logId);
+        logger.info("off record:" + logId + " record:" + record);
+        if (record != null) {
+            record.stop();
+        }
+        return true;
+    }
+
     /**
      * 单个视频流对象
      */
     public class DeviceStream {
-        private EventBus roomEventBus = new EventBus();
+        private EventBus roomEventBus = new AsyncEventBus("default_room", Executors.newCachedThreadPool());
+        private Map<String, Audience> records = new HashMap<>(); //开启记录
         private String stream;  //流名称
         private String deviceId;  //设备ID
         private WebSocketSession owner;
@@ -220,6 +240,15 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
             roomEventBus.unregister(audience);
         }
 
+        public boolean register(Record record) {
+            roomEventBus.register(record);
+            return true;
+        }
+
+        public void unregister(Record record) {
+            roomEventBus.unregister(record);
+        }
+
         public void post(Object roomEvent) {
             roomEventBus.post(roomEvent);
         }
@@ -229,7 +258,7 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
             if (deadEvent.getEvent()!= null) {
                 if (deadEvent.getEvent() instanceof RoomEvent) {
                     RoomEvent event = (RoomEvent) deadEvent.getEvent();
-                    if (event.getType() == RoomEventEnum.STREAM) {
+                    if (event.getType() == RoomEventEnum.STREAM && records.isEmpty()) {
                         off();
                     }
                 }
@@ -288,7 +317,141 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
         }
     }
 
+    private File pic_folder;
+
+    public static final DateFormat df = new SimpleDateFormat("yyyyMMdd");
+
+    @Value("#{application['pic.folder']}")
+    void setPicFolder(String folder) {
+        pic_folder = new File(folder);
+        if (!pic_folder.exists()) {
+            System.out.println(pic_folder.mkdirs());
+        }
+        System.out.println("初始化图片上传目录 : ${folder}");
+    }
+
+    // 新建record类 用于保存用户的操作记录 带上时间计算， 到时间停止并且自我销毁
+    public class Record {
+        private Executor exec = Executors.newFixedThreadPool(1);
+        private String logId; //记录ID
+        private String deviceId; //所在房间
+        private String stream = "1"; //默认录制视频流1
+        private FileOutputStream outputStream;
+        private File target;
+        private Timer timer = new Timer();
+
+        public Record(String logId, String deviceId) {
+            this.logId = logId;
+            this.deviceId = deviceId;
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    stop();
+                }
+            }, 60 * 1000);
+        }
+
+        public boolean newInstance() {
+            String filePath = df.format(new Date());
+            try {
+                File folder = new File(pic_folder, filePath);
+                this.target = new File(folder,"/" + logId + ".h264");
+                if (!folder.exists()) {
+                    logger.info("mkdirs:" + folder.mkdirs());
+                }
+                if (!this.target.exists()) {
+                    logger.info("createNewFile:" + this.target.createNewFile());
+                }
+                if (this.target.exists()) {
+                    if (outputStream == null) {
+                        try {
+                            outputStream = new FileOutputStream(this.target, true);
+                            return true;
+                        } catch (FileNotFoundException e) {
+                            logger.error("error to create file" + filePath, e);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                logger.error("error to record." + logId, e);
+            }
+            return false;
+        }
+
+        @Subscribe
+        public void handle(RoomEvent event) {
+            try {
+                if (RoomEventEnum.STREAM == event.getType()) {
+                    if (event.getMessage() != null && outputStream != null) {
+                        exec.execute(() -> {
+                            try {
+                                BinaryMessage message = event.getMessage();
+                                byte[] bytes = message.getPayload().array();
+                                if (bytes.length < 5) {
+                                    return;
+                                }
+                                outputStream.write(message.getPayload().array(), 0, message.getPayloadLength());
+                            } catch (Exception e) {
+                                logger.info("failed to write stream to:" + target.getPath(), e);
+                            }
+                        });
+                    }
+                }
+            } catch (Exception e) {
+                logger.info("failed to write stream, Exception: ", e);
+            }
+        }
+
+        public boolean stop() {
+            exec.execute(() -> {
+                try {
+                    String deviceKey = deviceId + "stream" + this.stream;
+                    DeviceStream deviceStream = streams.get(deviceKey);
+                    if (deviceStream != null) {
+                        deviceStream.unregister(this);
+                    }
+                    if (timer != null) {
+                        timer.cancel();
+                    }
+                    if (this.outputStream != null) {
+                        outputStream.close();
+                    }
+                    logger.info("到这儿了么？");
+                    if (this.target != null) {
+                        String path = this.target.getPath();
+                        String newPath = path.replace("h264", "mp4");
+                        String exec = "/usr/local/ffmpeg/bin/ffmpeg -i " + path + " -vcodec copy -f mp4 " + newPath;
+                        Process process = Runtime.getRuntime().exec(exec);
+                        logger.info(exec + ". exit value" + process.exitValue());
+                        logger.info("delete original file result." + target.delete());
+                    }
+                } catch (IOException e) {
+                    logger.error("error to close record." + logId, e);
+                }
+            });
+            return true;
+        }
+
+        public String getLogId() {
+            return logId;
+        }
+
+        public void setLogId(String logId) {
+            this.logId = logId;
+        }
+
+        public String getStream() {
+            return stream;
+        }
+
+        public void setStream(String stream) {
+            this.stream = stream;
+        }
+    }
+
+
     public class Audience {
+        private Executor exec = Executors.newFixedThreadPool(1);
         private String deviceId; //所在房间
         private String stream; //当前关注的视频流
         private WebSocketSession webSocketSession; //对应的session
@@ -312,34 +475,29 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
         public void handle(RoomEvent event) {
             try {
                 if (webSocketSession.isOpen() && RoomEventEnum.STREAM == event.getType() && start) {
-                    byte[] payload = event.getBinary();
-                    boolean isSPS = event.getBinary()[4] == (byte)(0x67 & 0xff);
-                    /*if (isSPS) {
+                    exec.execute(() -> {
                         if (needsps) {
                             Map<String, String> msg = new HashMap<>();
                             msg.put("type", "restart");
                             WebSocketHelper.send(webSocketSession, JSONUtil.beanToJson(msg));
                             needsps = false;
-                            byte[] sps = ArrayUtils.subarray(payload, 0, 27);
-                            BinaryMessage binaryMessage = new BinaryMessage(sps);
-                            webSocketSession.sendMessage(binaryMessage);
                         }
-                        byte[] pps = ArrayUtils.subarray(payload, 27, payload.length);
-                        BinaryMessage binaryMessage = new BinaryMessage(pps);
-                        webSocketSession.sendMessage(binaryMessage);
-                        return;
-                    }*/
-                    if (needsps) {
-                        Map<String, String> msg = new HashMap<>();
-                        msg.put("type", "restart");
-                        WebSocketHelper.send(webSocketSession, JSONUtil.beanToJson(msg));
-                        needsps = false;
-                    }
-                    BinaryMessage binaryMessage = new BinaryMessage(payload);
-                    webSocketSession.sendMessage(binaryMessage);
+                    });
+                    exec.execute(() -> {
+                        try {
+                            BinaryMessage binaryMessage = event.getMessage();
+                            byte[] bytes = binaryMessage.getPayload().array();
+                            if (bytes.length < 5) {
+                                return;
+                            }
+                            webSocketSession.sendMessage(new BinaryMessage(bytes, 0, binaryMessage.getPayloadLength(), false));
+                        } catch (IOException e) {
+                            logger.info("failed to send stream message to:" + webSocketSession + ": Exception: ", e);
+                        }
+                    });
                 }
-            } catch (IOException e) {
-                logger.info("failed to send stream message to:" + webSocketSession + ": Exception: " + e);
+            } catch (Exception e) {
+                logger.info("failed to send stream message to:" + webSocketSession + ": Exception: ", e);
             }
         }
 
@@ -383,7 +541,7 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
                     }
                 }
             } catch (Exception e) {
-                logger.info("failed to send stream message to:" + webSocketSession + ": Exception: " + e);
+                logger.info("failed to toggle stream to:" + webSocketSession, e);
             }
         }
 
@@ -435,8 +593,10 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
         private byte[] binary;
         private RoomEventEnum type;
         private int length;
+        private BinaryMessage message;
 
-        RoomEvent(byte[] binary, int len, RoomEventEnum type) {
+        RoomEvent(BinaryMessage message, byte[] binary, int len, RoomEventEnum type) {
+            this.message = message;
             this.binary = binary;
             this.length = len;
             this.type = type;
@@ -464,6 +624,14 @@ public class VideoSocketServer extends AbstractWebSocketHandler {
 
         public void setLength(int length) {
             this.length = length;
+        }
+
+        public BinaryMessage getMessage() {
+            return message;
+        }
+
+        public void setMessage(BinaryMessage message) {
+            this.message = message;
         }
     }
 

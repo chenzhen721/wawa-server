@@ -1,6 +1,5 @@
 package com.wawa.socket;
 
-import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.wawa.common.util.HttpClientUtils;
 import com.wawa.common.util.JSONUtil;
@@ -27,7 +26,7 @@ public class MessageHandshakeInterceptor extends HttpSessionHandshakeInterceptor
     @Value("#{application['main.domain']}")
     public String mainDomain;
 
-    //todo 加入连接时的校验逻辑
+    //加入连接时的校验逻辑
     @Override
     @SuppressWarnings("unchecked")
     public boolean beforeHandshake(ServerHttpRequest request,
@@ -37,7 +36,7 @@ public class MessageHandshakeInterceptor extends HttpSessionHandshakeInterceptor
         try {
             URI uri = request.getURI();
             String descriptor = uri.getQuery();
-            //todo 这些操作都可以放到interceptor中完成
+            //这些操作都可以放到interceptor中完成
             if (StringUtils.isBlank(descriptor)) {
                 return false;
             }
@@ -64,7 +63,7 @@ public class MessageHandshakeInterceptor extends HttpSessionHandshakeInterceptor
             attributes.put("user", user);
 
         } catch (Exception e) {
-            logger.error("connection failed.");
+            logger.error("connection failed." + request, e);
         }
         return super.beforeHandshake(request, response, wsHandler, attributes);
     }

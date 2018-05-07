@@ -15,8 +15,10 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +29,7 @@ public class MessageSocketServer extends TextWebSocketHandler {
     private static Logger logger = LoggerFactory.getLogger(MessageSocketServer.class);
     private static ExecutorService executor = Executors.newCachedThreadPool();
     private static Map<String, Connection<DBObject>> users = new ConcurrentHashMap<>();
-    private static Map<String, List<String>> rooms = new HashMap<>();
+    private static Map<String, Set<String>> rooms = new HashMap<>();
     private Timer timer = new Timer();
     private TimerTask pingTimerTask;
 
@@ -43,16 +45,18 @@ public class MessageSocketServer extends TextWebSocketHandler {
 
     public void sendToRoom(String roomId, String content) {
         if (rooms.containsKey(roomId)) {
-            List<String> list = rooms.get(roomId);
-            for(String userId : list) {
-                Connection<DBObject> conn = users.get(userId);
-                if (conn != null && conn.getSession() != null) {
-                    WebSocketSession session = conn.getSession();
-                    if (session != null && session.isOpen()) {
-                        WebSocketHelper.send(session, content);
+            Set<String> list = rooms.get(roomId);
+            executor.execute(() -> {
+                for(String userId : list) {
+                    Connection<DBObject> conn = users.get(userId);
+                    if (conn != null && conn.getSession() != null) {
+                        WebSocketSession session = conn.getSession();
+                        if (session != null && session.isOpen()) {
+                            WebSocketHelper.send(session, content);
+                        }
                     }
                 }
-            }
+            });
         }
     }
 
@@ -65,6 +69,13 @@ public class MessageSocketServer extends TextWebSocketHandler {
                 }
             }
         });
+    }
+
+    public Set<String> roomUsers(String roomId) {
+        if (rooms.containsKey(roomId)) {
+            return rooms.get(roomId);
+        }
+        return new HashSet<>();
     }
 
     @PostConstruct
@@ -91,10 +102,16 @@ public class MessageSocketServer extends TextWebSocketHandler {
             }
             String userId = String.valueOf(user.get("_id"));
             String current_room_id = "" + user.get("current_room_id");
-            List<String> list = rooms.get(current_room_id);
+            Set<String> list = rooms.get(current_room_id);
             if (list == null) {
-                list = new ArrayList<>();
+                list = new HashSet<>();
                 rooms.put((String) user.get("current_room_id"), list);
+            }
+            if (users.containsKey(userId)) {
+                Connection<DBObject> conn = users.remove(userId);
+                if (conn.getSession() != null && conn.getSession().isOpen()) {
+                    conn.getSession().close(CloseStatus.SERVICE_OVERLOAD);
+                }
             }
             list.add(userId);
             Connection<DBObject> connection = new Connection<>(userId, session, user);
@@ -134,7 +151,7 @@ public class MessageSocketServer extends TextWebSocketHandler {
                 Map<String, Object> user = (Map<String, Object>) attr.get("user");
                 String userId = String.valueOf(user.get("_id"));
                 String room_id = (String) user.get("current_room_id");
-                List<String> userList = rooms.get(room_id);
+                Set<String> userList = rooms.get(room_id);
                 Map<String, Object> testMsg = new HashMap<>();
                 Map<String, Object> data = new HashMap<>();
                 Map<String, Object> userInfo = new HashMap<>();
@@ -146,13 +163,16 @@ public class MessageSocketServer extends TextWebSocketHandler {
                 userInfo.put("nick_name", user.get("nick_name"));
                 String resp = JSONUtil.beanToJson(testMsg);
 //                if (userList != null && userList.remove(userId)) {
+                //这个地方需要开启线程发送消息
                 if (userList != null) {
                     logger.info("userList size." + userList.size());
-                    for (String id: userList) {
-                        Connection<DBObject> conn = users.get(id);
-                        WebSocketSession webSocketSession = conn.getSession();
-                        WebSocketHelper.send(webSocketSession, resp);
-                    }
+                    executor.execute(() -> {
+                        for (String id: userList) {
+                            Connection<DBObject> conn = users.get(id);
+                            WebSocketSession webSocketSession = conn.getSession();
+                            WebSocketHelper.send(webSocketSession, resp);
+                        }
+                    });
                 }
             }
         } catch (Exception e) {
@@ -178,7 +198,7 @@ public class MessageSocketServer extends TextWebSocketHandler {
             if (user != null && !user.isEmpty()) {
                 String userId = String.valueOf(user.get("_id"));
                 users.remove(userId);
-                List<String> list = rooms.get("" + user.get("current_room_id"));
+                Set<String> list = rooms.get("" + user.get("current_room_id"));
                 list.remove(userId);
             }
         }
@@ -220,7 +240,7 @@ public class MessageSocketServer extends TextWebSocketHandler {
                             if (value.getData() != null) {
                                 String current_room_id = "" + value.getData().get("current_room_id");
                                 if (rooms.containsKey(current_room_id)) {
-                                    List<String> list = rooms.get(current_room_id);
+                                    Set<String> list = rooms.get(current_room_id);
                                     list.remove(current_room_id);
                                 }
                             }

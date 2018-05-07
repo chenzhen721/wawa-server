@@ -47,6 +47,8 @@ public class MachineSocketServer extends TextWebSocketHandler {
     private MongoTemplate logMongo;
     @Resource
     private WriteConcern writeConcern;
+    @Resource
+    private VideoSocketServer videoSocketServer;
     private static ExecutorService executor = Executors.newCachedThreadPool();
     private static Map<String, DBObject> machines = new HashMap<>();
     private static Map<String, WebSocketSession> devices = new HashMap<>();
@@ -76,32 +78,24 @@ public class MachineSocketServer extends TextWebSocketHandler {
      */
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        logger.info("建立连接，开始初始化!" + session);
+        logger.info("machine socket建立连接，开始初始化!" + session);
+        Map<String, Object> attr = session.getAttributes();
+        if (attr == null || !attr.containsKey("deviceInfo")) {
+            WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
+            session.close(CloseStatus.BAD_DATA);
+            return;
+        }
         try {
-            URI uri = session.getUri();
-            String descriptor = uri.getQuery();
-            //todo 这些操作都可以放到interceptor中完成
-            if (StringUtils.isBlank(descriptor)) {
-                WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
-                return;
-            }
-            Map<String, String> keypaire = StringHelper.parseUri(descriptor);
-            if (keypaire == null) {
-                WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
-                return;
-            }
-            if (!keypaire.containsKey("device_id")) {
-                WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
-                return;
-            }
-            String device_id = keypaire.get("device_id");
-            DBObject deviceInfo = machine().findOne($$(_id, device_id));
+            DBObject deviceInfo = (DBObject) attr.get("deviceInfo");
             deviceInfo.put("websocket", session);
             machines.put(session.getId(), deviceInfo);
-            devices.put(device_id, session);
+            devices.put("" + deviceInfo.get("_id"), session);
+            return;
         } catch (Exception e) {
             logger.error("connection failed." + session);
         }
+        WebSocketHelper.send(session, Result.丢失必需参数.toJsonString());
+        session.close(CloseStatus.BAD_DATA);
     }
 
     /**
@@ -130,7 +124,7 @@ public class MachineSocketServer extends TextWebSocketHandler {
                 }
             }
 
-            //游戏结果callback log_id record_id
+            //游戏结果callback
             if (msg.getCode() == 1) {
                 ActionResult actionResult = msg.getData();
                 if (ActionTypeEnum.操控指令.getId().equals(actionResult.getAction_type())
@@ -161,9 +155,12 @@ public class MachineSocketServer extends TextWebSocketHandler {
                                         update.append("updated", true);
                                     }
                                 }
-                            } catch (IOException e) {
+                            } catch (Exception e) {
                                 logger.error("error to get callback_url:" + callback_url + " ,with params" + JSONUtil.beanToJson(params));
                             }
+                            //收到结束回调
+                            logger.info("结束回调");
+                            videoSocketServer.record_off("" + record.get("record_id"), "" + deviceInfo.get("_id"));
                         }
                     }
                     update.append("operate_result", Boolean.parseBoolean(actionResult.getResult()));
