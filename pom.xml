@@ -407,6 +407,7 @@
                 <im.domain>http://test-aiim.lezhuale.com:6070</im.domain>
                 <server.domain>ws://test-ws.doll520.com/machine</server.domain>
                 <stream.domain>ws://test-ws.doll520.com/push</stream.domain>
+                <push.domain>ws://test-ws.doll520.com/push</push.domain>
                 <pull.domain>ws://test-ws.doll520.com/pull</pull.domain>
                 <doll.domain>ws://test-ws.doll520.com/doll</doll.domain>
                 <!--<wsvideo.domain>http://test-v.17laihou.com:7600</wsvideo.domain>-->
